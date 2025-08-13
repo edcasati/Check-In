@@ -1,0 +1,19 @@
+<lint-module
+    format="1"
+    dir="C:\Users\edcas\Check-in-2\Check-In\app"
+    name=":app"
+    type="APP"
+    maven="Accessible Alarm:app:unspecified"
+    agpVersion="8.9.2"
+    buildFolder="build"
+    bootClassPath="C:\Users\edcas\AppData\Local\Android\Sdk\platforms\android-33\android.jar;C:\Users\edcas\AppData\Local\Android\Sdk\build-tools\35.0.0\core-lambda-stubs.jar"
+    javaSourceLevel="11"
+    compileTarget="android-33"
+    neverShrinking="true">
+  <lintOptions
+      abortOnError="true"
+      absolutePaths="true"
+      checkReleaseBuilds="true"
+      explainIssues="true"/>
+  <variant name="release"/>
+</lint-module>

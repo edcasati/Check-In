@@ -1,0 +1,34 @@
+[
+    {
+        "merged": "com.example.accessiblealarm.app-mergeDebugResources-47:/layout/activity_main.xml",
+        "source": "com.example.accessiblealarm.app-main-50:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.example.accessiblealarm.app-mergeDebugResources-47:/layout/fragment_settings.xml",
+        "source": "com.example.accessiblealarm.app-main-50:/layout/fragment_settings.xml"
+    },
+    {
+        "merged": "com.example.accessiblealarm.app-mergeDebugResources-47:/layout/item_contact_selection.xml",
+        "source": "com.example.accessiblealarm.app-main-50:/layout/item_contact_selection.xml"
+    },
+    {
+        "merged": "com.example.accessiblealarm.app-mergeDebugResources-47:/layout/fragment_alarms.xml",
+        "source": "com.example.accessiblealarm.app-main-50:/layout/fragment_alarms.xml"
+    },
+    {
+        "merged": "com.example.accessiblealarm.app-mergeDebugResources-47:/layout/dialog_contact_selection.xml",
+        "source": "com.example.accessiblealarm.app-main-50:/layout/dialog_contact_selection.xml"
+    },
+    {
+        "merged": "com.example.accessiblealarm.app-mergeDebugResources-47:/layout/fragment_home.xml",
+        "source": "com.example.accessiblealarm.app-main-50:/layout/fragment_home.xml"
+    },
+    {
+        "merged": "com.example.accessiblealarm.app-mergeDebugResources-47:/layout/dialog_contact_details.xml",
+        "source": "com.example.accessiblealarm.app-main-50:/layout/dialog_contact_details.xml"
+    },
+    {
+        "merged": "com.example.accessiblealarm.app-mergeDebugResources-47:/layout/item_selected_contact.xml",
+        "source": "com.example.accessiblealarm.app-main-50:/layout/item_selected_contact.xml"
+    }
+]

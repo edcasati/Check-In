@@ -1,0 +1,14 @@
+0000000000000000000000000000000000000000 f9f86af189fe1df57afc4251719569b87a676e4c Edward Casati <edcasati@live.com> 1753765012 -0500	clone: from https://github.com/edcasati/Check-In.git
+f9f86af189fe1df57afc4251719569b87a676e4c 70d386b25743fab74ad857d6fe966b7ebedc9208 Edward Casati <edcasati@live.com> 1753770486 -0500	commit: initial conmit
+70d386b25743fab74ad857d6fe966b7ebedc9208 70d386b25743fab74ad857d6fe966b7ebedc9208 Edward Casati <edcasati@live.com> 1754182228 -0500	checkout: moving from main to Phone-and-Watch
+70d386b25743fab74ad857d6fe966b7ebedc9208 00fa361a2ab65d048d842e7c6925e75106cff428 Edward Casati <edcasati@live.com> 1754182305 -0500	commit: Phone and watch
+00fa361a2ab65d048d842e7c6925e75106cff428 b8eefe6bfbca1f850ffad07ef5304130a62b9263 Edward Casati <edcasati@live.com> 1754464123 -0500	commit: added watch on body detevtion/
+b8eefe6bfbca1f850ffad07ef5304130a62b9263 b8eefe6bfbca1f850ffad07ef5304130a62b9263 Edward Casati <edcasati@live.com> 1754889267 -0500	reset: moving to HEAD
+b8eefe6bfbca1f850ffad07ef5304130a62b9263 70d386b25743fab74ad857d6fe966b7ebedc9208 Edward Casati <edcasati@live.com> 1754889271 -0500	checkout: moving from Phone-and-Watch to main
+70d386b25743fab74ad857d6fe966b7ebedc9208 a2f3ca722f01ba57eb8687049263667379def772 Edward Casati <edcasati@live.com> 1755071297 -0500	commit: reset watch
+a2f3ca722f01ba57eb8687049263667379def772 591c0dfcf2a930e557611bc6799a3183f9366d48 Edward Casati <edcasati@live.com> 1755071334 -0500	pull --tags origin main: Merge made by the 'ort' strategy.
+591c0dfcf2a930e557611bc6799a3183f9366d48 4447eca12d6b2a9938e5c118d1f59082f0477e80 Edward Casati <edcasati@live.com> 1755071889 -0500	commit: reset again
+4447eca12d6b2a9938e5c118d1f59082f0477e80 4447eca12d6b2a9938e5c118d1f59082f0477e80 Edward Casati <edcasati@live.com> 1755071948 -0500	checkout: moving from main to Phone
+4447eca12d6b2a9938e5c118d1f59082f0477e80 b8eefe6bfbca1f850ffad07ef5304130a62b9263 Edward Casati <edcasati@live.com> 1755072258 -0500	checkout: moving from Phone to Phone-and-Watch
+b8eefe6bfbca1f850ffad07ef5304130a62b9263 4447eca12d6b2a9938e5c118d1f59082f0477e80 Edward Casati <edcasati@live.com> 1755072455 -0500	checkout: moving from Phone-and-Watch to main
+4447eca12d6b2a9938e5c118d1f59082f0477e80 4447eca12d6b2a9938e5c118d1f59082f0477e80 Edward Casati <edcasati@live.com> 1755072472 -0500	checkout: moving from main to Phone

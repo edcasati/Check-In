@@ -1,0 +1,595 @@
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\AlarmsFragment.kt:183: Warning: Implicitly using the default locale is a common source of bugs: Use String.format(Locale, ...) instead [DefaultLocale]
+                    val newTime = String.format("%02d:%02d", selectedHour, selectedMinute)
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\HomeFragment.kt:253: Warning: Implicitly using the default locale is a common source of bugs: Use String.format(Locale, ...) instead [DefaultLocale]
+                        nextCheckInTime.text = "Snoozing (${remainingMinutes}:${String.format("%02d", remainingSeconds)})"
+                                                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\HomeFragment.kt:253: Warning: Implicitly using the default locale is a common source of bugs: Use String.format(Locale, ...) instead [DefaultLocale]
+                        nextCheckInTime.text = "Snoozing (${remainingMinutes}:${String.format("%02d", remainingSeconds)})"
+                                                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "DefaultLocale":
+   Calling String#toLowerCase() or #toUpperCase() without specifying an
+   explicit locale is a common source of bugs. The reason for that is that
+   those methods will use the current locale on the user's device, and even
+   though the code appears to work correctly when you are developing the app,
+   it will fail in some locales. For example, in the Turkish locale, the
+   uppercase replacement for i is not I.
+
+   If you want the methods to just perform ASCII replacement, for example to
+   convert an enum name, call String#toUpperCase(Locale.ROOT) instead. If you
+   really want to use the current locale, call
+   String#toUpperCase(Locale.getDefault()) instead.
+
+   https://developer.android.com/reference/java/util/Locale.html#default_locale
+
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\MainActivity.kt:39: Warning: Field requires API level 29 (current min is 23): android.Manifest.permission#ACCESS_BACKGROUND_LOCATION [InlinedApi]
+            Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "InlinedApi":
+   This check scans through all the Android API field references in the
+   application and flags certain constants, such as static final integers and
+   Strings, which were introduced in later versions. These will actually be
+   copied into the class files rather than being referenced, which means that
+   the value is available even when running on older devices. In some cases
+   that's fine, and in other cases it can result in a runtime crash or
+   incorrect behavior. It depends on the context, so consider the code
+   carefully and decide whether it's safe and can be suppressed or whether the
+   code needs to be guarded.
+
+   If you really want to use this API and don't need to support older devices
+   just set the minSdkVersion in your build.gradle or AndroidManifest.xml
+   files.
+
+   If your code is deliberately accessing newer APIs, and you have ensured
+   (e.g. with conditional execution) that this code will only ever be called
+   on a supported platform, then you can annotate your class or method with
+   the @TargetApi annotation specifying the local minimum SDK to apply, such
+   as @TargetApi(11), such that this check considers 11 rather than your
+   manifest file's minimum SDK as the required API level.
+
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\build.gradle:13: Warning: Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the android.os.Build.VERSION_CODES javadoc for details. [OldTargetApi]
+        targetSdk 33
+        ~~~~~~~~~~~~
+
+   Explanation for issues of type "OldTargetApi":
+   When your application or sdk runs on a version of Android that is more
+   recent than your targetSdkVersion specifies that it has been tested with,
+   various compatibility modes kick in. This ensures that your application
+   continues to work, but it may look out of place. For example, if the
+   targetSdkVersion is less than 14, your app may get an option button in the
+   UI.
+
+   To fix this issue, set the targetSdkVersion to the highest available value.
+   Then test your app to make sure everything works correctly. You may want to
+   consult the compatibility notes to see what changes apply to each version
+   you are adding support for:
+   https://developer.android.com/reference/android/os/Build.VERSION_CODES.html
+   as well as follow this guide:
+   https://developer.android.com/distribute/best-practices/develop/target-sdk.
+   html
+
+   https://developer.android.com/distribute/best-practices/develop/target-sdk.html
+
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\HomeFragment.kt:91: Warning: alarmStateReceiver is missing RECEIVER_EXPORTED or RECEIVER_NOT_EXPORTED flag for unprotected broadcasts registered for com.example.accessiblealarm.ALARM_STATE_CHANGED [UnspecifiedRegisterReceiverFlag]
+        requireContext().registerReceiver(
+        ^
+
+   Explanation for issues of type "UnspecifiedRegisterReceiverFlag":
+   In Android U, all receivers registering for non-system broadcasts are
+   required to include a flag indicating the receiver's exported state. Apps
+   registering for non-system broadcasts should use the
+   ContextCompat#registerReceiver APIs with flags set to either
+   RECEIVER_EXPORTED or RECEIVER_NOT_EXPORTED.
+
+   If you are not expecting broadcasts from other apps on the device, register
+   your receiver with RECEIVER_NOT_EXPORTED to protect your receiver on all
+   platform releases.
+
+   https://developer.android.com/reference/androidx/core/content/ContextCompat#registerReceiver(android.content.Context,android.content.BroadcastReceiver,android.content.IntentFilter,int)
+
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\AlarmsFragment.kt:50: Warning: Use SwitchCompat from AppCompat or SwitchMaterial from Material library [UseSwitchCompatOrMaterialCode from androidx.appcompat]
+            val enabledSwitch = view.findViewById<Switch>(getAlarmEnabledId(alarmNumber))
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "UseSwitchCompatOrMaterialCode":
+   Use SwitchCompat from AppCompat or SwitchMaterial from Material library
+
+   Vendor: Android Open Source Project
+   Identifier: androidx.appcompat
+   Feedback: https://issuetracker.google.com/issues/new?component=460343
+
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_alarms.xml:51: Warning: Use SwitchCompat from AppCompat or SwitchMaterial from Material library [UseSwitchCompatOrMaterialXml from androidx.appcompat]
+                <Switch
+                ^
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_alarms.xml:89: Warning: Use SwitchCompat from AppCompat or SwitchMaterial from Material library [UseSwitchCompatOrMaterialXml from androidx.appcompat]
+                <Switch
+                ^
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_alarms.xml:127: Warning: Use SwitchCompat from AppCompat or SwitchMaterial from Material library [UseSwitchCompatOrMaterialXml from androidx.appcompat]
+                <Switch
+                ^
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_alarms.xml:165: Warning: Use SwitchCompat from AppCompat or SwitchMaterial from Material library [UseSwitchCompatOrMaterialXml from androidx.appcompat]
+                <Switch
+                ^
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_alarms.xml:203: Warning: Use SwitchCompat from AppCompat or SwitchMaterial from Material library [UseSwitchCompatOrMaterialXml from androidx.appcompat]
+                <Switch
+                ^
+
+   Explanation for issues of type "UseSwitchCompatOrMaterialXml":
+   Use SwitchCompat from AppCompat or SwitchMaterial from Material library
+
+   Vendor: Android Open Source Project
+   Identifier: androidx.appcompat
+   Feedback: https://issuetracker.google.com/issues/new?component=460343
+
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\build.gradle:8: Warning: A newer version of compileSdkVersion than 33 is available: 35 [GradleDependency]
+    compileSdk 33
+    ~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\build.gradle:41: Warning: A newer version of androidx.core:core-ktx than 1.9.0 is available: 1.16.0 [GradleDependency]
+    implementation 'androidx.core:core-ktx:1.9.0'
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\build.gradle:42: Warning: A newer version of androidx.appcompat:appcompat than 1.6.1 is available: 1.7.1 [GradleDependency]
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\build.gradle:43: Warning: A newer version of com.google.android.material:material than 1.8.0 is available: 1.12.0 [GradleDependency]
+    implementation 'com.google.android.material:material:1.8.0'
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\build.gradle:44: Warning: A newer version of androidx.constraintlayout:constraintlayout than 2.1.4 is available: 2.2.1 [GradleDependency]
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\build.gradle:45: Warning: A newer version of androidx.lifecycle:lifecycle-viewmodel-ktx than 2.6.1 is available: 2.9.2 [GradleDependency]
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1'
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\build.gradle:46: Warning: A newer version of androidx.lifecycle:lifecycle-livedata-ktx than 2.6.1 is available: 2.9.2 [GradleDependency]
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.6.1'
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\build.gradle:47: Warning: A newer version of androidx.navigation:navigation-fragment-ktx than 2.5.3 is available: 2.9.2 [GradleDependency]
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.5.3'
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\build.gradle:48: Warning: A newer version of androidx.navigation:navigation-ui-ktx than 2.5.3 is available: 2.9.2 [GradleDependency]
+    implementation 'androidx.navigation:navigation-ui-ktx:2.5.3'
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\build.gradle:49: Warning: A newer version of org.jetbrains.kotlinx:kotlinx-coroutines-android than 1.6.4 is available: 1.7.3 [GradleDependency]
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4'
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "GradleDependency":
+   This detector looks for usages of libraries where the version you are using
+   is not the current stable release. Using older versions is fine, and there
+   are cases where you deliberately want to stick with an older version.
+   However, you may simply not be aware that a more recent version is
+   available, and that is what this lint check helps find.
+
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\AlarmsFragment.kt:220: Warning: Use of this function is discouraged because resource reflection makes it harder to perform build optimizations and compile-time verification of code. It is much more efficient to retrieve resources by identifier (e.g. R.foo.bar) than by name (e.g. getIdentifier("bar", "foo", null)). [DiscouragedApi]
+        return resources.getIdentifier("alarm${alarmNumber}_time", "id", requireContext().packageName)
+                         ~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\AlarmsFragment.kt:224: Warning: Use of this function is discouraged because resource reflection makes it harder to perform build optimizations and compile-time verification of code. It is much more efficient to retrieve resources by identifier (e.g. R.foo.bar) than by name (e.g. getIdentifier("bar", "foo", null)). [DiscouragedApi]
+        return resources.getIdentifier("alarm${alarmNumber}_enabled", "id", requireContext().packageName)
+                         ~~~~~~~~~~~~~
+
+   Explanation for issues of type "DiscouragedApi":
+   Discouraged APIs are allowed and are not deprecated, but they may be unfit
+   for common use (e.g. due to slow performance or subtle behavior).
+
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\SettingsFragment.kt:249: Warning: It will always be more efficient to use more specific change events if you can. Rely on notifyDataSetChanged as a last resort. [NotifyDataSetChanged]
+        contactsAdapter.notifyDataSetChanged()
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\SettingsFragment.kt:272: Warning: It will always be more efficient to use more specific change events if you can. Rely on notifyDataSetChanged as a last resort. [NotifyDataSetChanged]
+                 contactsAdapter.notifyDataSetChanged()
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "NotifyDataSetChanged":
+   The RecyclerView adapter's onNotifyDataSetChanged method does not specify
+   what about the data set has changed, forcing any observers to assume that
+   all existing items and structure may no longer be valid. `LayoutManager`s
+   will be forced to fully rebind and relayout all visible views.
+
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\drawable\ic_settings.xml:9: Warning: Very long vector path (904 characters), which is bad for performance. Considering reducing precision, removing minor details or rasterizing vector. [VectorPath]
+        android:pathData="M19.14,12.94c0.04,-0.3 0.06,-0.61 0.06,-0.94c0,-0.32 -0.02,-0.64 -0.07,-0.94l2.03,-1.58c0.18,-0.14 0.23,-0.41 0.12,-0.61l-1.92,-3.32c-0.12,-0.22 -0.37,-0.29 -0.59,-0.22l-2.39,0.96c-0.5,-0.38 -1.03,-0.7 -1.62,-0.94L14.4,2.81c-0.04,-0.24 -0.24,-0.41 -0.48,-0.41h-3.84c-0.24,0 -0.43,0.17 -0.47,0.41L9.25,5.35C8.66,5.59 8.12,5.92 7.63,6.29L5.24,5.33c-0.22,-0.08 -0.47,0 -0.59,0.22L2.74,8.87C2.62,9.08 2.66,9.34 2.86,9.48l2.03,1.58C4.84,11.36 4.8,11.69 4.8,12s0.02,0.64 0.07,0.94l-2.03,1.58c-0.18,0.14 -0.23,0.41 -0.12,0.61l1.92,3.32c0.12,0.22 0.37,0.29 0.59,0.22l2.39,-0.96c0.5,0.38 1.03,0.7 1.62,0.94l0.36,2.54c0.05,0.24 0.24,0.41 0.48,0.41h3.84c0.24,0 0.44,-0.17 0.47,-0.41l0.36,-2.54c0.59,-0.24 1.13,-0.56 1.62,-0.94l2.39,0.96c0.22,0.08 0.47,0 0.59,-0.22l1.92,-3.32c0.12,-0.22 0.07,-0.47 -0.12,-0.61L19.14,12.94zM12,15.6c-1.98,0 -3.6,-1.62 -3.6,-3.6s1.62,-3.6 3.6,-3.6s3.6,1.62 3.6,3.6S13.98,15.6 12,15.6z"/>
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "VectorPath":
+   Using long vector paths is bad for performance. There are several ways to
+   make the pathData shorter:
+   * Using less precision
+   * Removing some minor details
+   * Using the Android Studio vector conversion tool
+   * Rasterizing the image (converting to PNG)
+
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\dialog_contact_details.xml:7: Warning: Possible overdraw: Root element paints background #1E1E1E with a theme that also paints a background (inferred theme is @style/Theme.AccessibleAlarm) [Overdraw]
+    android:background="#1E1E1E">
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\dialog_contact_selection.xml:6: Warning: Possible overdraw: Root element paints background #1E1E1E with a theme that also paints a background (inferred theme is @style/Theme.AccessibleAlarm) [Overdraw]
+    android:background="#1E1E1E">
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "Overdraw":
+   If you set a background drawable on a root view, then you should use a
+   custom theme where the theme background is null. Otherwise, the theme
+   background will be painted first, only to have your custom background
+   completely cover it; this is called "overdraw".
+
+   NOTE: This detector relies on figuring out which layouts are associated
+   with which activities based on scanning the Java code, and it's currently
+   doing that using an inexact pattern matching algorithm. Therefore, it can
+   incorrectly conclude which activity the layout is associated with and then
+   wrongly complain that a background-theme is hidden.
+
+   If you want your custom background on multiple pages, then you should
+   consider making a custom theme with your custom background and just using
+   that theme instead of a root element background.
+
+   Of course it's possible that your custom drawable is translucent and you
+   want it to be mixed with the background. However, you will get better
+   performance if you pre-mix the background with your drawable and use that
+   resulting image or color as a custom theme background instead.
+
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\values\api_keys.xml:3: Warning: The resource R.string.tectbelt_api_key appears to be unused [UnusedResources]
+    <string name="tectbelt_api_key">ab95ae36835e8665b0b7c5e653efca278e308449ZIrm5zdMOnnDTlTL9C9rEkPcD</string>
+            ~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\values\colors.xml:3: Warning: The resource R.color.purple_200 appears to be unused [UnusedResources]
+    <color name="purple_200">#FFBB86FC</color>
+           ~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\drawable\ic_emergency.xml:2: Warning: The resource R.drawable.ic_emergency appears to be unused [UnusedResources]
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+^
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\drawable\ic_fail.xml:2: Warning: The resource R.drawable.ic_fail appears to be unused [UnusedResources]
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+^
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\drawable\ic_launcher_background.xml:2: Warning: The resource R.drawable.ic_launcher_background appears to be unused [UnusedResources]
+<vector
+^
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\drawable\ic_launcher_foreground.xml:2: Warning: The resource R.drawable.ic_launcher_foreground appears to be unused [UnusedResources]
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+^
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\drawable\ic_success.xml:2: Warning: The resource R.drawable.ic_success appears to be unused [UnusedResources]
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+^
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\values\strings.xml:7: Warning: The resource R.string.set_time appears to be unused [UnusedResources]
+    <string name="set_time">Set Time</string>
+            ~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\values\strings.xml:8: Warning: The resource R.string.enable_alarm appears to be unused [UnusedResources]
+    <string name="enable_alarm">Enable Alarm</string>
+            ~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\values\strings.xml:9: Warning: The resource R.string.save_settings appears to be unused [UnusedResources]
+    <string name="save_settings">Save Settings</string>
+            ~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\values\strings.xml:10: Warning: The resource R.string.alarm_enabled appears to be unused [UnusedResources]
+    <string name="alarm_enabled">Alarm enabled</string>
+            ~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\values\strings.xml:11: Warning: The resource R.string.alarm_disabled appears to be unused [UnusedResources]
+    <string name="alarm_disabled">Alarm Disabled</string>
+            ~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\values\strings.xml:12: Warning: The resource R.string.alarm_time appears to be unused [UnusedResources]
+    <string name="alarm_time">Alarm Time</string>
+            ~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\values\strings.xml:15: Warning: The resource R.string.save appears to be unused [UnusedResources]
+    <string name="save">Save</string>
+            ~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\values\strings.xml:16: Warning: The resource R.string.alarm_stopped_manually appears to be unused [UnusedResources]
+    <string name="alarm_stopped_manually">%1$s Check-In OK at %2$s</string>
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\values\strings.xml:26: Warning: The resource R.string.contact_details appears to be unused [UnusedResources]
+    <string name="contact_details">Contact Details</string>
+            ~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "UnusedResources":
+   Unused resources make applications larger and slow down builds.
+
+
+   The unused resource check can ignore tests. If you want to include
+   resources that are only referenced from tests, consider packaging them in a
+   test source set instead.
+
+   You can include test sources in the unused resource check by setting the
+   system property lint.unused-resources.include-tests =true, and to exclude
+   them (usually for performance reasons), use
+   lint.unused-resources.exclude-tests =true.
+   ,
+
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\mipmap-anydpi-v26\ic_launcher.xml:2: Warning: The application adaptive icon is missing a monochrome tag [MonochromeLauncherIcon]
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+^
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\mipmap-anydpi-v26\ic_launcher_round.xml:2: Warning: The application adaptive roundIcon is missing a monochrome tag [MonochromeLauncherIcon]
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+^
+
+   Explanation for issues of type "MonochromeLauncherIcon":
+   If android:roundIcon and android:icon are both in your manifest, you must
+   either remove the reference to android:roundIcon if it is not needed; or,
+   supply the monochrome icon in the drawable defined by the android:roundIcon
+   and android:icon attribute.
+
+   For example, if android:roundIcon and android:icon are both in the
+   manifest, a launcher might choose to use android:roundIcon over
+   android:icon to display the adaptive app icon. Therefore, your themed
+   application iconwill not show if your monochrome attribute is not also
+   specified in android:roundIcon.
+
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\AlarmManager.kt:39: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+        sharedPreferences.edit().putLong("alarm_$alarmId", timeInMillis).apply()
+        ~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\AlarmManager.kt:51: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+        sharedPreferences.edit().remove("alarm_$alarmId").apply()
+        ~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\AlarmService.kt:163: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+            val prefs = getSharedPreferences("AlarmPrefs", MODE_PRIVATE).edit()
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\AlarmService.kt:293: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+            getSharedPreferences("AlarmPrefs", MODE_PRIVATE)
+            ^
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\AlarmService.kt:329: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+            getSharedPreferences("AlarmPrefs", MODE_PRIVATE)
+            ^
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\AlarmsFragment.kt:141: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+            requireContext().getSharedPreferences("AlarmPrefs", Context.MODE_PRIVATE)
+            ^
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\AlarmsFragment.kt:160: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+            requireContext().getSharedPreferences("AlarmPrefs", Context.MODE_PRIVATE)
+            ^
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\AlarmsFragment.kt:233: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+        requireContext().getSharedPreferences("AlarmPrefs", 0)
+        ^
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\AlarmsFragment.kt:245: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+        requireContext().getSharedPreferences("AlarmPrefs", 0)
+        ^
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\HomeFragment.kt:107: Warning: Use the KTX extension function String.toColorInt instead? [UseKtx]
+        emergencyOriginalColor = (emergencyButton.background as? android.graphics.drawable.ColorDrawable)?.color ?: Color.parseColor("#440000")
+                                                                                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\HomeFragment.kt:196: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+                            sharedPrefs.edit()
+                            ~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\HomeFragment.kt:257: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+                        sharedPrefs.edit()
+                        ~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\SettingsFragment.kt:79: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+                requireContext().getSharedPreferences("AlarmPrefs", android.content.Context.MODE_PRIVATE)
+                ^
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\SettingsFragment.kt:91: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+                    sharedPreferences.edit().putInt("alarm_volume", progress).apply()
+                    ~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\SettingsFragment.kt:144: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+                    requireContext().getSharedPreferences("AlarmPrefs", android.content.Context.MODE_PRIVATE)
+                    ^
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\SettingsFragment.kt:299: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+        sharedPreferences.edit().putString("selected_contacts", jsonArray.toString()).apply()
+        ~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\SettingsFragment.kt:374: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+         sharedPreferences.edit()
+         ~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\SettingsFragment.kt:473: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+            sharedPreferences.edit().putInt("actual_missed_count", currentCount + 1).apply()
+            ~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\SettingsFragment.kt:478: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+            sharedPreferences.edit().putInt("actual_missed_count", 0).apply()
+            ~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "UseKtx":
+   The Android KTX libraries decorates the Android platform SDK as well as
+   various libraries with more convenient extension functions available from
+   Kotlin, allowing you to use default parameters, named parameters, and
+   more.
+
+   Available options:
+
+   **remove-defaults** (default is true):
+   Whether to skip arguments that match the defaults provided by the extension.
+
+   Extensions often provide default values for some of the parameters. For example:
+   ```kotlin
+   fun Path.readLines(charset: Charset = Charsets.UTF_8): List<String> { return Files.readAllLines(this, charset) }
+   ```
+   This lint check will by default automatically omit parameters that match the default, so if your code was calling ```kotlin
+   Files.readAllLines(file, Charset.UTF_8)
+   ```
+   lint would replace this with
+   ```kotlin
+   file.readLines()
+   ```
+   rather than
+   ```kotlin
+   file.readLines(Charset.UTF_8
+   ```
+   You can turn this behavior off using this option.
+
+   To configure this option, use a `lint.xml` file with an <option> like this:
+
+   ```xml
+   <lint>
+       <issue id="UseKtx">
+           <option name="remove-defaults" value="true" />
+       </issue>
+   </lint>
+   ```
+
+   **require-present** (default is true):
+   Whether to only offer extensions already available.
+
+   This option lets you only have lint suggest extension replacements if those extensions are already available on the class path (in other words, you're already depending on the library containing the extension method.)
+
+   To configure this option, use a `lint.xml` file with an <option> like this:
+
+   ```xml
+   <lint>
+       <issue id="UseKtx">
+           <option name="require-present" value="true" />
+       </issue>
+   </lint>
+   ```
+
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\HomeFragment.kt:130: Warning: Custom view `Button` has setOnTouchListener called on it but does not override performClick [ClickableViewAccessibility]
+        stopAlarmButton.setOnTouchListener { _, event ->
+        ^
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\HomeFragment.kt:130: Warning: onTouch lambda should call View#performClick when a click is detected [ClickableViewAccessibility]
+        stopAlarmButton.setOnTouchListener { _, event ->
+                                           ^
+
+   Explanation for issues of type "ClickableViewAccessibility":
+   If a View that overrides onTouchEvent or uses an OnTouchListener does not
+   also implement performClick and call it when clicks are detected, the View
+   may not handle accessibility actions properly. Logic handling the click
+   actions should ideally be placed in View#performClick as some accessibility
+   services invoke performClick when a click action should occur.
+
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\item_contact_selection.xml:57: Warning: Missing contentDescription attribute on image [ContentDescription]
+        <ImageView
+         ~~~~~~~~~
+
+   Explanation for issues of type "ContentDescription":
+   Non-textual widgets like ImageViews and ImageButtons should use the
+   contentDescription attribute to specify a textual description of the widget
+   such that screen readers and other accessibility tools can adequately
+   describe the user interface.
+
+   Note that elements in application screens that are purely decorative and do
+   not provide any content or enable a user action should not have
+   accessibility content descriptions. In this case, set their descriptions to
+   @null. If your app's minSdkVersion is 16 or higher, you can instead set
+   these graphical elements' android:importantForAccessibility attributes to
+   no.
+
+   Note that for text fields, you should not set both the hint and the
+   contentDescription attributes since the hint will never be shown. Just set
+   the hint.
+
+   https://developer.android.com/guide/topics/ui/accessibility/apps#special-cases
+
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\HomeFragment.kt:253: Warning: Do not concatenate text displayed with setText. Use resource string with placeholders. [SetTextI18n]
+                        nextCheckInTime.text = "Snoozing (${remainingMinutes}:${String.format("%02d", remainingSeconds)})"
+                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\java\com\example\accessiblealarm\HomeFragment.kt:253: Warning: String literal in setText can not be translated. Use Android resources instead. [SetTextI18n]
+                        nextCheckInTime.text = "Snoozing (${remainingMinutes}:${String.format("%02d", remainingSeconds)})"
+                                                ~~~~~~~~~~
+
+   Explanation for issues of type "SetTextI18n":
+   When calling TextView#setText
+   * Never call Number#toString() to format numbers; it will not handle
+   fraction separators and locale-specific digits properly. Consider using
+   String#format with proper format specifications (%d or %f) instead.
+   * Do not pass a string literal (e.g. "Hello") to display text. Hardcoded
+   text can not be properly translated to other languages. Consider using
+   Android resource strings instead.
+   * Do not build messages by concatenating text chunks. Such messages can not
+   be properly translated.
+
+   https://developer.android.com/guide/topics/resources/localization.html
+
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\dialog_contact_details.xml:24: Warning: Hardcoded string "A", should use @string resource [HardcodedText]
+            android:text="A"
+            ~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\dialog_contact_details.xml:43: Warning: Hardcoded string "Contact Name", should use @string resource [HardcodedText]
+                android:text="Contact Name"/>
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\dialog_contact_details.xml:52: Warning: Hardcoded string "Phone Number", should use @string resource [HardcodedText]
+                android:text="Phone Number"/>
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\dialog_contact_selection.xml:11: Warning: Hardcoded string "Select Contact", should use @string resource [HardcodedText]
+        android:text="Select Contact"
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\dialog_contact_selection.xml:42: Warning: Hardcoded string "Cancel", should use @string resource [HardcodedText]
+            android:text="Cancel"
+            ~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_alarms.xml:49: Warning: Hardcoded string "Alarm 1 time", should use @string resource [HardcodedText]
+                    android:contentDescription="Alarm 1 time"/>
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_alarms.xml:55: Warning: Hardcoded string "Enable or disable alarm 1", should use @string resource [HardcodedText]
+                    android:contentDescription="Enable or disable alarm 1"/>
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_alarms.xml:87: Warning: Hardcoded string "Alarm 2 time", should use @string resource [HardcodedText]
+                    android:contentDescription="Alarm 2 time"/>
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_alarms.xml:93: Warning: Hardcoded string "Enable or disable alarm 2", should use @string resource [HardcodedText]
+                    android:contentDescription="Enable or disable alarm 2"/>
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_alarms.xml:125: Warning: Hardcoded string "Alarm 3 time", should use @string resource [HardcodedText]
+                    android:contentDescription="Alarm 3 time"/>
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_alarms.xml:131: Warning: Hardcoded string "Enable or disable alarm 3", should use @string resource [HardcodedText]
+                    android:contentDescription="Enable or disable alarm 3"/>
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_alarms.xml:163: Warning: Hardcoded string "Alarm 4 time", should use @string resource [HardcodedText]
+                    android:contentDescription="Alarm 4 time"/>
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_alarms.xml:169: Warning: Hardcoded string "Enable or disable alarm 4", should use @string resource [HardcodedText]
+                    android:contentDescription="Enable or disable alarm 4"/>
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_alarms.xml:201: Warning: Hardcoded string "Alarm 5 time", should use @string resource [HardcodedText]
+                    android:contentDescription="Alarm 5 time"/>
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_alarms.xml:207: Warning: Hardcoded string "Enable or disable alarm 5", should use @string resource [HardcodedText]
+                    android:contentDescription="Enable or disable alarm 5"/>
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_home.xml:14: Warning: Hardcoded string "00:00", should use @string resource [HardcodedText]
+        android:text="00:00"
+        ~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_home.xml:26: Warning: Hardcoded string "Loading...", should use @string resource [HardcodedText]
+        android:text="Loading..."
+        ~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_home.xml:97: Warning: Hardcoded string "Next Check-in Time", should use @string resource [HardcodedText]
+                android:text="Next Check-in Time"
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_home.xml:107: Warning: Hardcoded string "--:--", should use @string resource [HardcodedText]
+                android:text="--:--"
+                ~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_settings.xml:24: Warning: Hardcoded string "User Name", should use @string resource [HardcodedText]
+        android:hint="User Name"
+        ~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_settings.xml:36: Warning: Hardcoded string "User Name", should use @string resource [HardcodedText]
+            android:contentDescription="User Name"/>
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_settings.xml:44: Warning: Hardcoded string "Alarm Volume", should use @string resource [HardcodedText]
+        android:text="Alarm Volume"
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_settings.xml:79: Warning: Hardcoded string "2", should use @string resource [HardcodedText]
+            android:text="2"
+            ~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_settings.xml:88: Warning: Hardcoded string "3", should use @string resource [HardcodedText]
+            android:text="3"
+            ~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_settings.xml:97: Warning: Hardcoded string "4", should use @string resource [HardcodedText]
+            android:text="4"
+            ~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_settings.xml:106: Warning: Hardcoded string "5", should use @string resource [HardcodedText]
+            android:text="5"
+            ~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_settings.xml:115: Warning: Hardcoded string "6", should use @string resource [HardcodedText]
+            android:text="6"
+            ~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_settings.xml:124: Warning: Hardcoded string "7", should use @string resource [HardcodedText]
+            android:text="7"
+            ~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\fragment_settings.xml:133: Warning: Hardcoded string "8", should use @string resource [HardcodedText]
+            android:text="8"
+            ~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\item_contact_selection.xml:26: Warning: Hardcoded string "A", should use @string resource [HardcodedText]
+            android:text="A"
+            ~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\item_contact_selection.xml:44: Warning: Hardcoded string "Contact Name", should use @string resource [HardcodedText]
+                android:text="Contact Name"/>
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\item_contact_selection.xml:53: Warning: Hardcoded string "Phone Number", should use @string resource [HardcodedText]
+                android:text="Phone Number"/>
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\item_selected_contact.xml:26: Warning: Hardcoded string "A", should use @string resource [HardcodedText]
+            android:text="A"
+            ~~~~~~~~~~~~~~~~
+C:\Users\edcas\Check-in-2\Check-In\Phone\app\src\main\res\layout\item_selected_contact.xml:39: Warning: Hardcoded string "Contact Name", should use @string resource [HardcodedText]
+            android:text="Contact Name"/>
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "HardcodedText":
+   Hardcoding text attributes directly in layout files is bad for several
+   reasons:
+
+   * When creating configuration variations (for example for landscape or
+   portrait) you have to repeat the actual text (and keep it up to date when
+   making changes)
+
+   * The application cannot be translated to other languages by just adding
+   new translations for existing string resources.
+
+   There are quickfixes to automatically extract this hardcoded string into a
+   resource lookup.
+
+0 errors, 105 warnings
