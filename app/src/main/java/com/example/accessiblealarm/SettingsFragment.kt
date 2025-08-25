@@ -2,8 +2,6 @@ package com.example.accessiblealarm
 
 import android.media.AudioManager
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,7 +11,6 @@ import android.widget.Toast
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.google.android.material.textfield.TextInputEditText
-import java.util.regex.Pattern
 import android.Manifest
 import android.content.pm.PackageManager
 import android.provider.ContactsContract
@@ -25,7 +22,6 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.LinearLayoutManager
 import org.json.JSONArray
 import org.json.JSONObject
-import android.widget.ImageView
 
 class SettingsFragment : Fragment() {
     private lateinit var audioManager: AppAudioManager
@@ -116,58 +112,7 @@ class SettingsFragment : Fragment() {
         // Remove the audio restoration from onDestroy since it's now handled in onStop
     }
 
-    private fun setupPhoneNumberFormatting(input: TextInputEditText, prefKey: String) {
-        input.addTextChangedListener(object : TextWatcher {
-            private var isFormatting = false
 
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-
-            override fun afterTextChanged(s: Editable?) {
-                if (isFormatting) return
-                isFormatting = true
-
-                val formatted = formatPhoneNumber(s.toString())
-                if (formatted != s.toString()) {
-                    input.setText(formatted)
-                    input.setSelection(formatted.length)
-                }
-
-                isFormatting = false
-            }
-        })
-
-        input.setOnFocusChangeListener { _, hasFocus ->
-            if (!hasFocus) {
-                val contactNumber = input.text.toString()
-                if (isValidPhoneNumber(contactNumber)) {
-                    requireContext().getSharedPreferences("AlarmPrefs", android.content.Context.MODE_PRIVATE)
-                        .edit()
-                        .putString(prefKey, contactNumber)
-                        .apply()
-                    Toast.makeText(requireContext(), "Contact number saved", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(requireContext(), "Please enter a valid phone number", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
-
-    private fun formatPhoneNumber(number: String): String {
-        // Remove all non-digit characters
-        val digits = number.replace(Regex("[^0-9]"), "")
-        
-        return when {
-            digits.length <= 3 -> digits
-            digits.length <= 6 -> "(${digits.substring(0, 3)})${digits.substring(3)}"
-            else -> "(${digits.substring(0, 3)})${digits.substring(3, 6)}-${digits.substring(6, minOf(10, digits.length))}"
-        }
-    }
-
-    private fun isValidPhoneNumber(number: String): Boolean {
-        val digits = number.replace(Regex("[^0-9]"), "")
-        return digits.length == 10
-    }
 
     private fun hasContactsPermission(): Boolean {
         return ContextCompat.checkSelfPermission(

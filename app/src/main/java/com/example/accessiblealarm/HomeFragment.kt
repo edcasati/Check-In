@@ -8,7 +8,6 @@ import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.text.Html
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -21,14 +20,6 @@ import androidx.fragment.app.Fragment
 import java.text.SimpleDateFormat
 import java.util.*
 import android.graphics.Color
-import android.os.Vibrator
-import android.os.VibrationEffect
-import androidx.navigation.fragment.findNavController
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import android.location.Geocoder
 import androidx.core.text.HtmlCompat
 
 class HomeFragment : Fragment() {
@@ -60,8 +51,7 @@ class HomeFragment : Fragment() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == AlarmService.ACTION_ALARM_STATE_CHANGED) {
                 val isAlarmActive = intent.getBooleanExtra("alarm_active", false)
-                val alarmId = intent.getIntExtra("alarm_id", -1)
-                Log.d(TAG, "Received alarm state change: active=$isAlarmActive, id=$alarmId")
+                Log.d(TAG, "Received alarm state change: active=$isAlarmActive")
                 updateButtonAppearance()
             }
         }

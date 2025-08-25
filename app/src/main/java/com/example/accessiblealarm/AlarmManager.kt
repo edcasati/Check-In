@@ -1,17 +1,9 @@
 package com.example.accessiblealarm
 
-import android.Manifest
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.location.Geocoder
-import android.os.Build
-import android.util.Log
-import android.widget.Toast
-import androidx.core.content.ContextCompat
-import java.util.*
 
 class AlarmManager(private val context: Context) {
     private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -51,11 +43,5 @@ class AlarmManager(private val context: Context) {
         sharedPreferences.edit().remove("alarm_$alarmId").apply()
     }
 
-    fun getAlarmTime(alarmId: Int): Long {
-        return sharedPreferences.getLong("alarm_$alarmId", 0)
-    }
 
-    fun isAlarmSet(alarmId: Int): Boolean {
-        return sharedPreferences.contains("alarm_$alarmId")
-    }
 } 

@@ -7,7 +7,6 @@ import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -46,7 +45,6 @@ import java.io.IOException
 class AlarmService : Service(), SensorEventListener {
     private var mediaPlayer: MediaPlayer? = null
     private var alarmId: Int = -1
-    private var alarmStartTime: Long = 0
     private var isManuallyStopped = false
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var alarmTimeoutJob: Job? = null
@@ -155,9 +153,6 @@ class AlarmService : Service(), SensorEventListener {
         try {
             // Acquire wake lock to ensure background operation
             wakeLock?.takeIf { !it.isHeld }?.acquire(10 * 60 * 1000L /*10 minutes*/)
-            
-            // Record alarm start time
-            alarmStartTime = System.currentTimeMillis()
             
             // Set alarm as active and clear snooze state if this is a snooze alarm starting
             val prefs = getSharedPreferences("AlarmPrefs", MODE_PRIVATE).edit()
