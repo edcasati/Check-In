@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.accessiblealarm.app-mergeDebugResources-46:/values-sw600dp-v13/values-sw600dp-v13.xml",
+            "outputFile": "com.example.accessiblealarm.app-mergeDebugResources-47:/values-sw600dp-v13/values-sw600dp-v13.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\edcas\\.gradle\\caches\\8.11.1\\transforms\\b04c451f9196e2760b06b7a2fa1dfd84\\transformed\\appcompat-1.6.1\\res\\values-sw600dp-v13\\values-sw600dp-v13.xml",
+                    "source": "C:\\Users\\edcas\\.gradle\\caches\\8.11.1\\transforms\\3d398454981515d5f37333681c363601\\transformed\\appcompat-1.7.0\\res\\values-sw600dp-v13\\values-sw600dp-v13.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9",
                         "startColumns": "4,4,4,4,4,4,4,4",
@@ -14,7 +14,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\edcas\\.gradle\\caches\\8.11.1\\transforms\\434f723e02f7576792e689723bff66e8\\transformed\\material-1.8.0\\res\\values-sw600dp-v13\\values-sw600dp-v13.xml",
+                    "source": "C:\\Users\\edcas\\.gradle\\caches\\8.11.1\\transforms\\861622ab71c5dfbbe3dc4b401ed147c8\\transformed\\material-1.12.0\\res\\values-sw600dp-v13\\values-sw600dp-v13.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,10,11,12,13,14",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4",

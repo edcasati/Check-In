@@ -87,24 +87,40 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        // Register for alarm state updates
-        requireContext().registerReceiver(
-            alarmStateReceiver,
-            IntentFilter(AlarmService.ACTION_ALARM_STATE_CHANGED)
-        )
+        try {
+            // Register for alarm state updates
+            requireContext().registerReceiver(
+                alarmStateReceiver,
+                IntentFilter(AlarmService.ACTION_ALARM_STATE_CHANGED)
+            )
+            isReceiverRegistered = true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error registering broadcast receiver", e)
+            isReceiverRegistered = false
+        }
         
-        timeTextView = view.findViewById(R.id.current_time)
-        dateTextView = view.findViewById(R.id.current_date)
-        stopAlarmButton = view.findViewById(R.id.stop_alarm_button)
-        nextCheckInTime = view.findViewById(R.id.next_check_in_time)
-        progressBar = view.findViewById(R.id.progress_bar)
-        emergencyButton = view.findViewById(R.id.extra_action_button)
+        try {
+            timeTextView = view.findViewById(R.id.current_time)
+            dateTextView = view.findViewById(R.id.current_date)
+            stopAlarmButton = view.findViewById(R.id.stop_alarm_button)
+            nextCheckInTime = view.findViewById(R.id.next_check_in_time)
+            progressBar = view.findViewById(R.id.progress_bar)
+            emergencyButton = view.findViewById(R.id.extra_action_button)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error finding views", e)
+            return
+        }
         
         // Set HTML formatted text for the button
         stopAlarmButton.text = HtmlCompat.fromHtml(getString(R.string.check_in_button_text), HtmlCompat.FROM_HTML_MODE_LEGACY)
         
         // Set initial emergency button text
-        emergencyOriginalColor = (emergencyButton.background as? android.graphics.drawable.ColorDrawable)?.color ?: Color.parseColor("#440000")
+        try {
+            emergencyOriginalColor = (emergencyButton.background as? android.graphics.drawable.ColorDrawable)?.color ?: Color.parseColor("#440000")
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not get emergency button color, using default", e)
+            emergencyOriginalColor = Color.parseColor("#440000")
+        }
         emergencyOriginalText = HtmlCompat.fromHtml(
             """
             <div style='text-align: center;'>
@@ -217,14 +233,26 @@ class HomeFragment : Fragment() {
     private fun playBeepSound() {
         try {
             mediaPlayer?.release()
-            mediaPlayer = MediaPlayer.create(context, R.raw.beep)
-            mediaPlayer?.setOnCompletionListener { mp ->
-                mp.release()
-                mediaPlayer = null
+            mediaPlayer = null
+            
+            val context = context
+            if (context != null) {
+                mediaPlayer = MediaPlayer.create(context, R.raw.beep)
+                if (mediaPlayer != null) {
+                    mediaPlayer?.setOnCompletionListener { mp ->
+                        mp.release()
+                        mediaPlayer = null
+                    }
+                    mediaPlayer?.start()
+                } else {
+                    Log.w(TAG, "Could not create MediaPlayer for beep sound")
+                }
+            } else {
+                Log.w(TAG, "Context is null, cannot play beep sound")
             }
-            mediaPlayer?.start()
         } catch (e: Exception) {
             Log.e(TAG, "Error playing beep sound", e)
+            mediaPlayer = null
         }
     }
 
@@ -373,11 +401,21 @@ class HomeFragment : Fragment() {
     private fun startSiren() {
         stopSiren()
         try {
-            emergencySirenPlayer = MediaPlayer.create(context, R.raw.siren)
-            emergencySirenPlayer?.isLooping = true
-            emergencySirenPlayer?.start()
+            val context = context
+            if (context != null) {
+                emergencySirenPlayer = MediaPlayer.create(context, R.raw.siren)
+                if (emergencySirenPlayer != null) {
+                    emergencySirenPlayer?.isLooping = true
+                    emergencySirenPlayer?.start()
+                } else {
+                    Log.w(TAG, "Could not create MediaPlayer for siren")
+                }
+            } else {
+                Log.w(TAG, "Context is null, cannot play siren")
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error playing siren", e)
+            emergencySirenPlayer = null
         }
     }
 
@@ -462,17 +500,16 @@ class HomeFragment : Fragment() {
         handler.post(updateTimeRunnable)
     }
 
+    private var isReceiverRegistered = false
+
     override fun onPause() {
         super.onPause()
         handler.removeCallbacks(updateTimeRunnable)
         progressUpdateRunnable?.let { handler.removeCallbacks(it) }
         mediaPlayer?.release()
         mediaPlayer = null
-        try {
-            requireContext().unregisterReceiver(alarmStateReceiver)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error unregistering receivers", e)
-        }
+        deactivateEmergency()
+        unregisterReceiver()
     }
 
     override fun onDestroyView() {
@@ -481,10 +518,18 @@ class HomeFragment : Fragment() {
         progressUpdateRunnable?.let { handler.removeCallbacks(it) }
         mediaPlayer?.release()
         mediaPlayer = null
-        try {
-            requireContext().unregisterReceiver(alarmStateReceiver)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error unregistering receivers", e)
+        deactivateEmergency()
+        unregisterReceiver()
+    }
+    
+    private fun unregisterReceiver() {
+        if (isReceiverRegistered) {
+            try {
+                context?.unregisterReceiver(alarmStateReceiver)
+                isReceiverRegistered = false
+            } catch (e: Exception) {
+                Log.e(TAG, "Error unregistering receiver", e)
+            }
         }
     }
 } 

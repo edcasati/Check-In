@@ -6,23 +6,27 @@
 
     <uses-sdk
         android:minSdkVersion="23"
-        android:targetSdkVersion="33" />
+        android:targetSdkVersion="35" />
 
+    <!-- For API 33+ SCHEDULE_EXACT_ALARM requires special user approval or canScheduleExactAlarms() -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <!-- USE_EXACT_ALARM is only for privileged apps, removing -->
+    <!-- <uses-permission android:name="android.permission.USE_EXACT_ALARM" /> -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
-    <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!-- Background location permission for Android 10+ -->
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <!-- Required for partial wake locks -->
+    <uses-permission android:name="android.permission.PARTIAL_WAKE_LOCK" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
     <uses-feature

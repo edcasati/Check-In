@@ -5,7 +5,9 @@ import android.app.PendingIntent
 import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -108,6 +110,25 @@ class AlarmsFragment : Fragment() {
 
     private fun scheduleAlarm(alarmNumber: Int, hour: Int, minute: Int) {
         try {
+            // Check if we can schedule exact alarms on Android 12+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (!alarmManager.canScheduleExactAlarms()) {
+                    Log.e(TAG, "Cannot schedule exact alarms - permission not granted")
+                    Toast.makeText(requireContext(), 
+                        "Exact alarm permission required. Please enable it in Settings.", 
+                        Toast.LENGTH_LONG).show()
+                    
+                    // Open settings for exact alarm permission
+                    try {
+                        val intent = Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                        startActivity(intent)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Could not open exact alarm settings", e)
+                    }
+                    return
+                }
+            }
+            
             val calendar = Calendar.getInstance().apply {
                 set(Calendar.HOUR_OF_DAY, hour)
                 set(Calendar.MINUTE, minute)
@@ -142,8 +163,14 @@ class AlarmsFragment : Fragment() {
                 .edit()
                 .putLong("alarm_$alarmNumber", calendar.timeInMillis)
                 .apply()
+                
+            Log.d(TAG, "Alarm $alarmNumber scheduled for ${calendar.time}")
+            Toast.makeText(requireContext(), 
+                "Alarm scheduled for ${SimpleDateFormat("hh:mm a", Locale.getDefault()).format(calendar.time)}", 
+                Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             Log.e(TAG, "Error scheduling alarm $alarmNumber", e)
+            Toast.makeText(requireContext(), "Failed to schedule alarm", Toast.LENGTH_SHORT).show()
         }
     }
 
