@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -37,6 +38,12 @@ class MainActivity : AppCompatActivity() {
             Manifest.permission.SEND_SMS
         )
         
+        private val NOTIFICATION_PERMISSIONS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            arrayOf(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            emptyArray()
+        }
+        
         private val BACKGROUND_LOCATION_PERMISSION = arrayOf(
             Manifest.permission.ACCESS_BACKGROUND_LOCATION
         )
@@ -44,11 +51,19 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        
+        try {
+            binding = ActivityMainBinding.inflate(layoutInflater)
+            setContentView(binding.root)
 
-        setupNavigation()
-        checkAndRequestPermissions()
+            setupNavigation()
+            checkAndRequestPermissions()
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error in onCreate", e)
+            // Try to show a simple error message and gracefully exit
+            Toast.makeText(this, "App initialization failed. Please try again.", Toast.LENGTH_LONG).show()
+            finish()
+        }
     }
 
     private fun setupNavigation() {
@@ -83,8 +98,15 @@ class MainActivity : AppCompatActivity() {
     private fun checkAndRequestPermissions() {
         val permissionsToRequest = mutableListOf<String>()
         
-        // Check each permission
+        // Check basic required permissions
         for (permission in REQUIRED_PERMISSIONS) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(permission)
+            }
+        }
+        
+        // Check notification permissions for Android 13+
+        for (permission in NOTIFICATION_PERMISSIONS) {
             if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
                 permissionsToRequest.add(permission)
             }

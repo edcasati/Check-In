@@ -11,20 +11,32 @@ class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val alarmId = intent.getIntExtra("ALARM_ID", -1)
         val isSnooze = intent.getBooleanExtra("IS_SNOOZE", false)
+        
+        Log.d(TAG, "===== ALARM TRIGGERED =====")
         Log.d(TAG, "Alarm received for ID: $alarmId, isSnooze: $isSnooze")
+        Log.d(TAG, "Intent action: ${intent.action}")
+        Log.d(TAG, "Current time: ${System.currentTimeMillis()}")
         
-        // Start the AlarmService with START_ALARM action
-        val serviceIntent = Intent(context, AlarmService::class.java).apply {
-            action = "START_ALARM"
-            putExtra("ALARM_ID", alarmId)
-            putExtra("IS_SNOOZE", isSnooze)
-        }
-        
-        // Start the service as a foreground service
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            context.startForegroundService(serviceIntent)
-        } else {
-            context.startService(serviceIntent)
+        try {
+            // Start the AlarmService with START_ALARM action
+            val serviceIntent = Intent(context, AlarmService::class.java).apply {
+                action = "START_ALARM"
+                putExtra("ALARM_ID", alarmId)
+                putExtra("IS_SNOOZE", isSnooze)
+            }
+            
+            // Start the service as a foreground service
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                Log.d(TAG, "Starting foreground service for alarm")
+                context.startForegroundService(serviceIntent)
+            } else {
+                Log.d(TAG, "Starting regular service for alarm")
+                context.startService(serviceIntent)
+            }
+            
+            Log.d(TAG, "AlarmService start request sent successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error starting AlarmService", e)
         }
     }
 } 

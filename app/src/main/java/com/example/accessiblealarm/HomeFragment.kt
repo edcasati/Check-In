@@ -69,11 +69,7 @@ class HomeFragment : Fragment() {
                 
                 // Update next check-in time if alarm was rescheduled
                 if (isRescheduled) {
-                    Log.d(TAG, "Alarm was rescheduled, updating next check-in time")
-                    // Use a slight delay to ensure all SharedPreferences updates are complete
-                    handler.postDelayed({
-                        updateNextCheckInTime()
-                    }, 200)
+                    updateNextCheckInTime()
                 }
             }
         }
@@ -99,24 +95,40 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        // Register for alarm state updates
-        requireContext().registerReceiver(
-            alarmStateReceiver,
-            IntentFilter(AlarmService.ACTION_ALARM_STATE_CHANGED)
-        )
+        try {
+            // Register for alarm state updates
+            requireContext().registerReceiver(
+                alarmStateReceiver,
+                IntentFilter(AlarmService.ACTION_ALARM_STATE_CHANGED)
+            )
+            isReceiverRegistered = true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error registering broadcast receiver", e)
+            isReceiverRegistered = false
+        }
         
-        timeTextView = view.findViewById(R.id.current_time)
-        dateTextView = view.findViewById(R.id.current_date)
-        stopAlarmButton = view.findViewById(R.id.stop_alarm_button)
-        nextCheckInTime = view.findViewById(R.id.next_check_in_time)
-        progressBar = view.findViewById(R.id.progress_bar)
-        emergencyButton = view.findViewById(R.id.extra_action_button)
+        try {
+            timeTextView = view.findViewById(R.id.current_time)
+            dateTextView = view.findViewById(R.id.current_date)
+            stopAlarmButton = view.findViewById(R.id.stop_alarm_button)
+            nextCheckInTime = view.findViewById(R.id.next_check_in_time)
+            progressBar = view.findViewById(R.id.progress_bar)
+            emergencyButton = view.findViewById(R.id.extra_action_button)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error finding views", e)
+            return
+        }
         
         // Set HTML formatted text for the button
         stopAlarmButton.text = HtmlCompat.fromHtml(getString(R.string.check_in_button_text), HtmlCompat.FROM_HTML_MODE_LEGACY)
         
         // Set initial emergency button text
-        emergencyOriginalColor = (emergencyButton.background as? android.graphics.drawable.ColorDrawable)?.color ?: Color.parseColor("#440000")
+        try {
+            emergencyOriginalColor = (emergencyButton.background as? android.graphics.drawable.ColorDrawable)?.color ?: Color.parseColor("#440000")
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not get emergency button color, using default", e)
+            emergencyOriginalColor = Color.parseColor("#440000")
+        }
         emergencyOriginalText = HtmlCompat.fromHtml(
             """
             <div style='text-align: center;'>
@@ -229,14 +241,26 @@ class HomeFragment : Fragment() {
     private fun playBeepSound() {
         try {
             mediaPlayer?.release()
-            mediaPlayer = MediaPlayer.create(context, R.raw.beep)
-            mediaPlayer?.setOnCompletionListener { mp ->
-                mp.release()
-                mediaPlayer = null
+            mediaPlayer = null
+            
+            val context = context
+            if (context != null) {
+                mediaPlayer = MediaPlayer.create(context, R.raw.beep)
+                if (mediaPlayer != null) {
+                    mediaPlayer?.setOnCompletionListener { mp ->
+                        mp.release()
+                        mediaPlayer = null
+                    }
+                    mediaPlayer?.start()
+                } else {
+                    Log.w(TAG, "Could not create MediaPlayer for beep sound")
+                }
+            } else {
+                Log.w(TAG, "Context is null, cannot play beep sound")
             }
-            mediaPlayer?.start()
         } catch (e: Exception) {
             Log.e(TAG, "Error playing beep sound", e)
+            mediaPlayer = null
         }
     }
 
@@ -248,7 +272,6 @@ class HomeFragment : Fragment() {
 
     private fun updateNextCheckInTime() {
         try {
-            Log.d(TAG, "updateNextCheckInTime() called")
             val sharedPrefs = requireContext().getSharedPreferences("AlarmPrefs", 0)
             val currentTime = Calendar.getInstance()
             
@@ -289,35 +312,23 @@ class HomeFragment : Fragment() {
                 Log.d(TAG, "Checking alarm $i - Time: $alarmTime, Enabled: $isEnabled")
 
                 if (alarmTime != null && isEnabled) {
-                    // Check if there's a rescheduled time for this alarm
-                    val rescheduledTime = sharedPrefs.getLong("alarm_$i", 0)
-                    
-                    val alarmCalendar = if (rescheduledTime > 0 && rescheduledTime > currentTime.timeInMillis) {
-                        // Use the rescheduled time if it exists and is in the future
-                        Log.d(TAG, "Using rescheduled time for alarm $i: ${Date(rescheduledTime)}")
-                        Calendar.getInstance().apply {
-                            timeInMillis = rescheduledTime
-                        }
-                    } else {
-                        // Use the original scheduled time
-                        val (alarmHour, alarmMinute) = alarmTime.split(":").map { it.toInt() }
-                        Calendar.getInstance().apply {
-                            set(Calendar.HOUR_OF_DAY, alarmHour)
-                            set(Calendar.MINUTE, alarmMinute)
-                            set(Calendar.SECOND, 0)
-                            set(Calendar.MILLISECOND, 0)
-                        }.also { calendar ->
-                            // If the time has passed today, check for tomorrow
-                            if (calendar.before(currentTime)) {
-                                calendar.add(Calendar.DAY_OF_YEAR, 1)
-                            }
-                        }
+                    val (alarmHour, alarmMinute) = alarmTime.split(":").map { it.toInt() }
+                    val alarmCalendar = Calendar.getInstance().apply {
+                        set(Calendar.HOUR_OF_DAY, alarmHour)
+                        set(Calendar.MINUTE, alarmMinute)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }
+
+                    // If the alarm time has passed today, check for tomorrow
+                    if (alarmCalendar.before(currentTime)) {
+                        alarmCalendar.add(Calendar.DAY_OF_YEAR, 1)
                     }
 
                     val timeDiff = alarmCalendar.timeInMillis - currentTime.timeInMillis
-                    Log.d(TAG, "Alarm $i time: ${timeFormat.format(alarmCalendar.time)}, Time diff: $timeDiff")
+                    Log.d(TAG, "Alarm time: ${timeFormat.format(alarmCalendar.time)}, Time diff: $timeDiff")
 
-                    if (timeDiff > 0 && timeDiff < minTimeDiff) {
+                    if (timeDiff < minTimeDiff) {
                         minTimeDiff = timeDiff
                         nextAlarmTime = alarmCalendar
                     }
@@ -331,7 +342,6 @@ class HomeFragment : Fragment() {
             }
             Log.d(TAG, "Setting next check-in time to: $nextTimeText")
             nextCheckInTime.text = nextTimeText
-            Log.d(TAG, "Next check-in time display updated successfully")
         } catch (e: Exception) {
             Log.e(TAG, "Error updating next check-in time", e)
             nextCheckInTime.text = "--:--"
@@ -399,11 +409,21 @@ class HomeFragment : Fragment() {
     private fun startSiren() {
         stopSiren()
         try {
-            emergencySirenPlayer = MediaPlayer.create(context, R.raw.siren)
-            emergencySirenPlayer?.isLooping = true
-            emergencySirenPlayer?.start()
+            val context = context
+            if (context != null) {
+                emergencySirenPlayer = MediaPlayer.create(context, R.raw.siren)
+                if (emergencySirenPlayer != null) {
+                    emergencySirenPlayer?.isLooping = true
+                    emergencySirenPlayer?.start()
+                } else {
+                    Log.w(TAG, "Could not create MediaPlayer for siren")
+                }
+            } else {
+                Log.w(TAG, "Context is null, cannot play siren")
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error playing siren", e)
+            emergencySirenPlayer = null
         }
     }
 
@@ -488,17 +508,16 @@ class HomeFragment : Fragment() {
         handler.post(updateTimeRunnable)
     }
 
+    private var isReceiverRegistered = false
+
     override fun onPause() {
         super.onPause()
         handler.removeCallbacks(updateTimeRunnable)
         progressUpdateRunnable?.let { handler.removeCallbacks(it) }
         mediaPlayer?.release()
         mediaPlayer = null
-        try {
-            requireContext().unregisterReceiver(alarmStateReceiver)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error unregistering receivers", e)
-        }
+        deactivateEmergency()
+        unregisterReceiver()
     }
 
     override fun onDestroyView() {
@@ -507,10 +526,18 @@ class HomeFragment : Fragment() {
         progressUpdateRunnable?.let { handler.removeCallbacks(it) }
         mediaPlayer?.release()
         mediaPlayer = null
-        try {
-            requireContext().unregisterReceiver(alarmStateReceiver)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error unregistering receivers", e)
+        deactivateEmergency()
+        unregisterReceiver()
+    }
+    
+    private fun unregisterReceiver() {
+        if (isReceiverRegistered) {
+            try {
+                context?.unregisterReceiver(alarmStateReceiver)
+                isReceiverRegistered = false
+            } catch (e: Exception) {
+                Log.e(TAG, "Error unregistering receiver", e)
+            }
         }
     }
 } 

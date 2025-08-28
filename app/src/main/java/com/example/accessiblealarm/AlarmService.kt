@@ -13,15 +13,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.*
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.os.Build
-import android.os.Handler
 import android.widget.Toast
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -62,7 +61,6 @@ class AlarmService : Service(), SensorEventListener {
     private val ORIENTATION_CHANGE_THRESHOLD = 500L
     private lateinit var audioManager: AppAudioManager
     private var wakeLock: PowerManager.WakeLock? = null
-    private val handler = Handler(Looper.getMainLooper())
 
     companion object {
         const val ERROR_NO_PHONE_NUMBER = "No phone number configured"
@@ -90,24 +88,72 @@ class AlarmService : Service(), SensorEventListener {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Alarm Channel",
-                NotificationManager.IMPORTANCE_HIGH
+                android.app.NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Channel for alarm notifications"
                 enableVibration(true)
             }
-            val notificationManager = getSystemService(NotificationManager::class.java)
+            val notificationManager = getSystemService(android.app.NotificationManager::class.java)
             notificationManager.createNotificationChannel(channel)
         }
     }
 
     private fun initializeMediaPlayer() {
-        mediaPlayer = MediaPlayer.create(this, R.raw.alarm)
-        mediaPlayer?.apply {
-            setWakeMode(applicationContext, PowerManager.PARTIAL_WAKE_LOCK)
-            isLooping = true
-        }
-        if (mediaPlayer == null) {
-            stopSelf()
+        try {
+            // Release any existing MediaPlayer
+            mediaPlayer?.release()
+            mediaPlayer = null
+            
+            // Create new MediaPlayer
+            mediaPlayer = MediaPlayer().apply {
+                // Set data source manually for better control
+                val afd = applicationContext.resources.openRawResourceFd(R.raw.alarm)
+                setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                afd.close()
+                
+                // Configure audio attributes for Android 15
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    setAudioAttributes(
+                        android.media.AudioAttributes.Builder()
+                            .setUsage(android.media.AudioAttributes.USAGE_ALARM)
+                            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .setFlags(android.media.AudioAttributes.FLAG_AUDIBILITY_ENFORCED)
+                            .build()
+                    )
+                } else {
+                    @Suppress("DEPRECATION")
+                    setAudioStreamType(android.media.AudioManager.STREAM_ALARM)
+                }
+                
+                setWakeMode(applicationContext, PowerManager.PARTIAL_WAKE_LOCK)
+                isLooping = true
+                
+                // Set volume to maximum
+                setVolume(1.0f, 1.0f)
+                
+                // Prepare the MediaPlayer
+                prepare()
+                
+                Log.d(TAG, "MediaPlayer initialized successfully with audio attributes")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error initializing MediaPlayer", e)
+            mediaPlayer = null
+            
+            // Fallback to simple MediaPlayer.create
+            try {
+                Log.d(TAG, "Trying fallback MediaPlayer creation")
+                mediaPlayer = MediaPlayer.create(this, R.raw.alarm)
+                mediaPlayer?.apply {
+                    setWakeMode(applicationContext, PowerManager.PARTIAL_WAKE_LOCK)
+                    isLooping = true
+                    setVolume(1.0f, 1.0f)
+                    Log.d(TAG, "Fallback MediaPlayer created successfully")
+                }
+            } catch (fallbackError: Exception) {
+                Log.e(TAG, "Fallback MediaPlayer creation also failed", fallbackError)
+                mediaPlayer = null
+            }
         }
         
         // Acquire wake lock for background operations
@@ -184,6 +230,23 @@ class AlarmService : Service(), SensorEventListener {
             // Set the volume and request audio focus
             audioManager.setAppVolume(volume)
             audioManager.requestAudioFocus()
+            
+            // Check if Do Not Disturb is blocking alarms
+            val androidAudioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+            val ringerMode = androidAudioManager.ringerMode
+            Log.d(TAG, "Current ringer mode: $ringerMode (0=silent, 1=vibrate, 2=normal)")
+            
+            if (ringerMode == android.media.AudioManager.RINGER_MODE_SILENT) {
+                Log.w(TAG, "Device is in silent mode, alarm may not be audible")
+            }
+            
+            // Check if we have notification policy access (required for Do Not Disturb bypass)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+                if (!notificationManager.isNotificationPolicyAccessGranted) {
+                    Log.w(TAG, "No notification policy access granted - alarm may be blocked by Do Not Disturb")
+                }
+            }
 
             // Broadcast alarm state change
             sendBroadcast(Intent(ACTION_ALARM_STATE_CHANGED).apply {
@@ -192,7 +255,23 @@ class AlarmService : Service(), SensorEventListener {
             })
 
             // Start the alarm sound
-            mediaPlayer?.start()
+            try {
+                if (mediaPlayer != null) {
+                    if (!mediaPlayer!!.isPlaying) {
+                        mediaPlayer!!.start()
+                        Log.d(TAG, "Alarm sound started successfully")
+                    } else {
+                        Log.d(TAG, "MediaPlayer is already playing")
+                    }
+                } else {
+                    Log.e(TAG, "MediaPlayer is null, cannot start alarm sound")
+                    // Try to reinitialize MediaPlayer
+                    initializeMediaPlayer()
+                    mediaPlayer?.start()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error starting alarm sound", e)
+            }
             
             // Create and show notification  
             val notificationTitle = if (isSnoozeAttempt) {
@@ -531,53 +610,17 @@ class AlarmService : Service(), SensorEventListener {
                 if (nextAlarm != null && scheduleHelper.isWithinMinutesBefore(nextAlarm.timeInMillis, 10)) {
                     Log.d(TAG, "Manual check-in within 10 minutes of next alarm (${nextAlarm.timeString}). Canceling and rescheduling.")
                     
-                    // Cancel the next scheduled alarm using system AlarmManager
-                    val systemAlarmManager = getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
-                    val cancelIntent = Intent(this@AlarmService, AlarmReceiver::class.java)
-                    val cancelPendingIntent = PendingIntent.getBroadcast(
-                        this@AlarmService,
-                        nextAlarm.alarmId,
-                        cancelIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                    )
-                    systemAlarmManager.cancel(cancelPendingIntent)
-                    
-                    // Remove the canceled alarm from SharedPreferences
-                    getSharedPreferences("AlarmPrefs", MODE_PRIVATE)
-                        .edit()
-                        .remove("alarm_${nextAlarm.alarmId}")
-                        .apply()
-                    
+                    // Cancel the next scheduled alarm
+                    val alarmManager = AlarmManager(this@AlarmService)
+                    alarmManager.cancelAlarm(nextAlarm.alarmId)
                     Log.d(TAG, "Canceled alarm ${nextAlarm.alarmId}")
                     
                     // Find the next alarm after the one we just canceled
                     val subsequentAlarm = scheduleHelper.findNextAlarmAfter(nextAlarm.alarmId)
                     
                     if (subsequentAlarm != null) {
-                        // Schedule the subsequent alarm using system AlarmManager
-                        val scheduleIntent = Intent(this@AlarmService, AlarmReceiver::class.java).apply {
-                            putExtra("ALARM_ID", subsequentAlarm.alarmId)
-                        }
-                        
-                        val schedulePendingIntent = PendingIntent.getBroadcast(
-                            this@AlarmService,
-                            subsequentAlarm.alarmId,
-                            scheduleIntent,
-                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                        )
-
-                        systemAlarmManager.setExactAndAllowWhileIdle(
-                            android.app.AlarmManager.RTC_WAKEUP,
-                            subsequentAlarm.timeInMillis,
-                            schedulePendingIntent
-                        )
-
-                        // Save the rescheduled alarm time
-                        getSharedPreferences("AlarmPrefs", MODE_PRIVATE)
-                            .edit()
-                            .putLong("alarm_${subsequentAlarm.alarmId}", subsequentAlarm.timeInMillis)
-                            .apply()
-                        
+                        // Schedule the subsequent alarm
+                        alarmManager.scheduleAlarm(subsequentAlarm.alarmId, subsequentAlarm.timeInMillis)
                         Log.d(TAG, "Rescheduled alarm ${subsequentAlarm.alarmId} for ${subsequentAlarm.timeString}")
                         
                         withContext(Dispatchers.Main) {
@@ -588,13 +631,11 @@ class AlarmService : Service(), SensorEventListener {
                             ).show()
                         }
                         
-                        // Broadcast alarm schedule change to update UI (with slight delay to ensure SharedPreferences are updated)
-                        handler.postDelayed({
-                            sendBroadcast(Intent(ACTION_ALARM_STATE_CHANGED).apply {
-                                putExtra("alarm_rescheduled", true)
-                                putExtra("next_alarm_time", subsequentAlarm.timeString)
-                            })
-                        }, 100)
+                        // Broadcast alarm schedule change to update UI
+                        sendBroadcast(Intent(ACTION_ALARM_STATE_CHANGED).apply {
+                            putExtra("alarm_rescheduled", true)
+                            putExtra("next_alarm_time", subsequentAlarm.timeString)
+                        })
                     } else {
                         Log.d(TAG, "No subsequent alarm found to reschedule")
                         withContext(Dispatchers.Main) {
@@ -605,13 +646,11 @@ class AlarmService : Service(), SensorEventListener {
                             ).show()
                         }
                         
-                        // Broadcast alarm schedule change to update UI (with slight delay to ensure SharedPreferences are updated)
-                        handler.postDelayed({
-                            sendBroadcast(Intent(ACTION_ALARM_STATE_CHANGED).apply {
-                                putExtra("alarm_rescheduled", true)
-                                putExtra("next_alarm_time", "--:--")
-                            })
-                        }, 100)
+                        // Broadcast alarm schedule change to update UI
+                        sendBroadcast(Intent(ACTION_ALARM_STATE_CHANGED).apply {
+                            putExtra("alarm_rescheduled", true)
+                            putExtra("next_alarm_time", "--:--")
+                        })
                     }
                 } else {
                     Log.d(TAG, "Manual check-in not within 10-minute window of next alarm")
@@ -952,37 +991,53 @@ class AlarmService : Service(), SensorEventListener {
     }
 
     private suspend fun getAddressFromLocation(location: Location): String = withContext(Dispatchers.IO) {
-        val geocoder = Geocoder(this@AlarmService, Locale.getDefault())
-        
         return@withContext try {
+            if (!Geocoder.isPresent()) {
+                Log.w(TAG, "Geocoder service not available")
+                return@withContext "Location: ${location.latitude}, ${location.longitude}"
+            }
+            
+            val geocoder = Geocoder(this@AlarmService, Locale.getDefault())
+            
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 // For Android 13+ use the new async API
-                var addressResult = "Location: ${location.latitude}, ${location.longitude}"
                 try {
-                    val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
-                    if (addresses?.isNotEmpty() == true) {
-                        val address = addresses[0]
-                        addressResult = address.getAddressLine(0) ?: "Address unavailable"
+                    // Use coroutine-compatible approach for the new async API
+                    kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
+                        geocoder.getFromLocation(
+                            location.latitude, 
+                            location.longitude, 
+                            1
+                        ) { addresses ->
+                            val result = if (addresses.isNotEmpty()) {
+                                addresses[0].getAddressLine(0) ?: "Address unavailable"
+                            } else {
+                                "Location: ${location.latitude}, ${location.longitude}"
+                            }
+                            continuation.resumeWith(Result.success(result))
+                        }
                     }
                 } catch (e: Exception) {
                     Log.w(TAG, "Geocoding failed: ${e.message}")
+                    "Location: ${location.latitude}, ${location.longitude}"
                 }
-                addressResult
             } else {
-                // For older Android versions use the deprecated sync API
-                @Suppress("DEPRECATION")
-                val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
-                if (addresses?.isNotEmpty() == true) {
-                    addresses[0].getAddressLine(0) ?: "Address unavailable"
-                } else {
+                // For older Android versions use try-catch around deprecated API
+                try {
+                    @Suppress("DEPRECATION")
+                    val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                    if (addresses?.isNotEmpty() == true) {
+                        addresses[0].getAddressLine(0) ?: "Address unavailable"
+                    } else {
+                        "Location: ${location.latitude}, ${location.longitude}"
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Geocoding failed: ${e.message}")
                     "Location: ${location.latitude}, ${location.longitude}"
                 }
             }
-        } catch (e: IOException) {
-            Log.w(TAG, "Geocoding failed: ${e.message}")
-            "Location: ${location.latitude}, ${location.longitude}"
         } catch (e: Exception) {
-            Log.w(TAG, "Error getting address: ${e.message}")
+            Log.e(TAG, "Error getting address: ${e.message}")
             "Location: ${location.latitude}, ${location.longitude}"
         }
     }
