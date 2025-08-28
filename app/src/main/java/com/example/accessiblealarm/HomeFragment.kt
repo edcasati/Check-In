@@ -61,8 +61,16 @@ class HomeFragment : Fragment() {
             if (intent?.action == AlarmService.ACTION_ALARM_STATE_CHANGED) {
                 val isAlarmActive = intent.getBooleanExtra("alarm_active", false)
                 val alarmId = intent.getIntExtra("alarm_id", -1)
-                Log.d(TAG, "Received alarm state change: active=$isAlarmActive, id=$alarmId")
+                val isRescheduled = intent.getBooleanExtra("alarm_rescheduled", false)
+                
+                Log.d(TAG, "Received alarm state change: active=$isAlarmActive, id=$alarmId, rescheduled=$isRescheduled")
+                
                 updateButtonAppearance()
+                
+                // Update next check-in time if alarm was rescheduled
+                if (isRescheduled) {
+                    updateNextCheckInTime()
+                }
             }
         }
     }
@@ -201,7 +209,7 @@ class HomeFragment : Fragment() {
                         }
                         
                         val intent = Intent(requireContext(), AlarmService::class.java)
-                        intent.action = "SEND_SMS"
+                        intent.action = "SEND_SMS_WITH_RESCHEDULE"
                         requireContext().startService(intent)
                         
                         // Reset missed check-in counter

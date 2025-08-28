@@ -141,6 +141,11 @@ class AlarmService : Service(), SensorEventListener {
                 sendCheckInSMS()
                 stopSelf()
             }
+            "SEND_SMS_WITH_RESCHEDULE" -> {
+                // Handle manual check-in SMS with potential alarm rescheduling
+                sendCheckInSMSWithReschedule()
+                stopSelf()
+            }
             "SEND_EMERGENCY_SMS" -> {
                 // Handle emergency SMS sending
                 sendEmergencySMS()
@@ -511,6 +516,72 @@ class AlarmService : Service(), SensorEventListener {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@AlarmService, "Error sending check-in messages", Toast.LENGTH_LONG).show()
                 }
+            }
+        }
+    }
+
+    private fun sendCheckInSMSWithReschedule() {
+        serviceScope.launch {
+            try {
+                val scheduleHelper = AlarmScheduleHelper(this@AlarmService)
+                val nextAlarm = scheduleHelper.findNextAlarm()
+                
+                if (nextAlarm != null && scheduleHelper.isWithinMinutesBefore(nextAlarm.timeInMillis, 10)) {
+                    Log.d(TAG, "Manual check-in within 10 minutes of next alarm (${nextAlarm.timeString}). Canceling and rescheduling.")
+                    
+                    // Cancel the next scheduled alarm
+                    val alarmManager = AlarmManager(this@AlarmService)
+                    alarmManager.cancelAlarm(nextAlarm.alarmId)
+                    Log.d(TAG, "Canceled alarm ${nextAlarm.alarmId}")
+                    
+                    // Find the next alarm after the one we just canceled
+                    val subsequentAlarm = scheduleHelper.findNextAlarmAfter(nextAlarm.alarmId)
+                    
+                    if (subsequentAlarm != null) {
+                        // Schedule the subsequent alarm
+                        alarmManager.scheduleAlarm(subsequentAlarm.alarmId, subsequentAlarm.timeInMillis)
+                        Log.d(TAG, "Rescheduled alarm ${subsequentAlarm.alarmId} for ${subsequentAlarm.timeString}")
+                        
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(
+                                this@AlarmService, 
+                                "Next alarm canceled. Rescheduled to ${subsequentAlarm.timeString}", 
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                        
+                        // Broadcast alarm schedule change to update UI
+                        sendBroadcast(Intent(ACTION_ALARM_STATE_CHANGED).apply {
+                            putExtra("alarm_rescheduled", true)
+                            putExtra("next_alarm_time", subsequentAlarm.timeString)
+                        })
+                    } else {
+                        Log.d(TAG, "No subsequent alarm found to reschedule")
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(
+                                this@AlarmService, 
+                                "Next alarm canceled. No more alarms scheduled today.", 
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                        
+                        // Broadcast alarm schedule change to update UI
+                        sendBroadcast(Intent(ACTION_ALARM_STATE_CHANGED).apply {
+                            putExtra("alarm_rescheduled", true)
+                            putExtra("next_alarm_time", "--:--")
+                        })
+                    }
+                } else {
+                    Log.d(TAG, "Manual check-in not within 10-minute window of next alarm")
+                }
+                
+                // Always send the check-in SMS regardless of rescheduling
+                sendCheckInSMS()
+                
+            } catch (e: Exception) {
+                Log.e(TAG, "Error in sendCheckInSMSWithReschedule", e)
+                // Fallback to regular check-in SMS
+                sendCheckInSMS()
             }
         }
     }
