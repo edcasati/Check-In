@@ -28,11 +28,13 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val PERMISSION_REQUEST_CODE = 123
         private const val BACKGROUND_LOCATION_REQUEST_CODE = 124
+        private const val SMS_PERMISSION_REQUEST_CODE = 125
         private val REQUIRED_PERMISSIONS = arrayOf(
             Manifest.permission.READ_PHONE_STATE,
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.READ_CONTACTS
+            Manifest.permission.READ_CONTACTS,
+            Manifest.permission.SEND_SMS
         )
         
         private val BACKGROUND_LOCATION_PERMISSION = arrayOf(
@@ -143,10 +145,28 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showPermissionExplanationDialog(permissions: Array<String>) {
+        val permissionTypes = mutableListOf<String>()
+        
+        if (permissions.contains(Manifest.permission.SEND_SMS)) {
+            permissionTypes.add("• SMS - to send check-in messages to your contacts")
+        }
+        if (permissions.any { it.contains("LOCATION") }) {
+            permissionTypes.add("• Location - to include your location in check-in messages")
+        }
+        if (permissions.contains(Manifest.permission.READ_CONTACTS)) {
+            permissionTypes.add("• Contacts - to select who receives your check-in messages")
+        }
+        if (permissions.contains(Manifest.permission.READ_PHONE_STATE)) {
+            permissionTypes.add("• Phone - to ensure the app works properly")
+        }
+        
+        val message = "This Check-In app needs the following permissions to function:\n\n" +
+                permissionTypes.joinToString("\n") + 
+                "\n\nThese permissions are essential for the app's safety features."
+        
         AlertDialog.Builder(this)
-            .setTitle("Permissions Required")
-            .setMessage("This app needs Location permissions to function properly. " +
-                    "These permissions are required for sharing location information.")
+            .setTitle("Permissions Required for Check-In App")
+            .setMessage(message)
             .setPositiveButton("Grant Permissions") { _, _ ->
                 ActivityCompat.requestPermissions(
                     this,
@@ -154,7 +174,7 @@ class MainActivity : AppCompatActivity() {
                     PERMISSION_REQUEST_CODE
                 )
             }
-            .setNegativeButton("Settings") { _, _ ->
+            .setNegativeButton("Open Settings") { _, _ ->
                 openAppSettings()
             }
             .setCancelable(false)
@@ -176,13 +196,30 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
             PERMISSION_REQUEST_CODE -> {
+                val grantedPermissions = permissions.filterIndexed { index, _ ->
+                    grantResults[index] == PackageManager.PERMISSION_GRANTED
+                }
+                val deniedPermissions = permissions.filterIndexed { index, _ ->
+                    grantResults[index] == PackageManager.PERMISSION_DENIED
+                }
+                
                 if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
-                    Toast.makeText(this, "Basic permissions granted", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "All permissions granted! Check-In app is ready to use.", Toast.LENGTH_LONG).show()
                     // Now request background location permission for Android 10+
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                         requestBackgroundLocationPermission()
                     }
                 } else {
+                    // Handle SMS permission specifically
+                    val smsGranted = grantedPermissions.contains(Manifest.permission.SEND_SMS)
+                    val smsDenied = deniedPermissions.contains(Manifest.permission.SEND_SMS)
+                    
+                    if (smsDenied) {
+                        showSMSPermissionDialog()
+                    } else if (smsGranted) {
+                        Toast.makeText(this, "SMS permission granted! You can now send check-in messages.", Toast.LENGTH_LONG).show()
+                    }
+                    
                     // Check if any permission was permanently denied
                     val permanentlyDenied = permissions.filterIndexed { index, permission ->
                         grantResults[index] == PackageManager.PERMISSION_DENIED &&
@@ -190,9 +227,13 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     if (permanentlyDenied.isNotEmpty()) {
-                        showSettingsDialog()
-                    } else {
-                        showPermissionExplanationDialog(permissions)
+                        if (permanentlyDenied.contains(Manifest.permission.SEND_SMS)) {
+                            showSMSSettingsDialog()
+                        } else {
+                            showSettingsDialog()
+                        }
+                    } else if (deniedPermissions.isNotEmpty() && !smsDenied) {
+                        showPermissionExplanationDialog(deniedPermissions.toTypedArray())
                     }
                 }
             }
@@ -204,6 +245,45 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun showSMSPermissionDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("SMS Permission Required")
+            .setMessage("The Check-In app needs SMS permission to send safety messages to your contacts. This is the core feature of the app.\n\nWithout this permission, the app cannot function properly.")
+            .setPositiveButton("Grant SMS Permission") { _, _ ->
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.SEND_SMS),
+                    PERMISSION_REQUEST_CODE
+                )
+            }
+            .setNegativeButton("Open Settings") { _, _ ->
+                openAppSettings()
+            }
+            .setCancelable(false)
+            .show()
+    }
+    
+    private fun showSMSSettingsDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("SMS Permission Required")
+            .setMessage("SMS permission is essential for this Check-In app to work. Please follow these steps:\n\n" +
+                    "1. Tap 'Open Settings' below\n" +
+                    "2. Find 'Permissions' \n" +
+                    "3. Tap 'SMS' or 'Phone'\n" +
+                    "4. Enable the permission\n" +
+                    "5. Return to the app\n\n" +
+                    "Without SMS permission, you cannot send check-in messages.")
+            .setPositiveButton("Open Settings") { _, _ ->
+                openAppSettings()
+            }
+            .setNegativeButton("I'll do it later") { dialog, _ ->
+                dialog.dismiss()
+                Toast.makeText(this, "Remember: SMS permission is required for check-in messages", Toast.LENGTH_LONG).show()
+            }
+            .setCancelable(false)
+            .show()
     }
 
     private fun showSettingsDialog() {
@@ -220,9 +300,18 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
+    private fun checkSMSPermissionStatus() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+            // Show a toast reminder about SMS permission
+            Toast.makeText(this, "SMS permission needed for check-in messages. Check app permissions in Settings.", Toast.LENGTH_LONG).show()
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         // Recheck permissions when app resumes
         checkAndRequestPermissions()
+        // Also check SMS permission specifically
+        checkSMSPermissionStatus()
     }
 } 
