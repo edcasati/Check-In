@@ -21,6 +21,7 @@ import androidx.core.content.ContextCompat
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import android.os.Handler
 import android.widget.Toast
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -61,6 +62,7 @@ class AlarmService : Service(), SensorEventListener {
     private val ORIENTATION_CHANGE_THRESHOLD = 500L
     private lateinit var audioManager: AppAudioManager
     private var wakeLock: PowerManager.WakeLock? = null
+    private val handler = Handler(Looper.getMainLooper())
 
     companion object {
         const val ERROR_NO_PHONE_NUMBER = "No phone number configured"
@@ -529,17 +531,53 @@ class AlarmService : Service(), SensorEventListener {
                 if (nextAlarm != null && scheduleHelper.isWithinMinutesBefore(nextAlarm.timeInMillis, 10)) {
                     Log.d(TAG, "Manual check-in within 10 minutes of next alarm (${nextAlarm.timeString}). Canceling and rescheduling.")
                     
-                    // Cancel the next scheduled alarm
-                    val alarmManager = AlarmManager(this@AlarmService)
-                    alarmManager.cancelAlarm(nextAlarm.alarmId)
+                    // Cancel the next scheduled alarm using system AlarmManager
+                    val systemAlarmManager = getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+                    val cancelIntent = Intent(this@AlarmService, AlarmReceiver::class.java)
+                    val cancelPendingIntent = PendingIntent.getBroadcast(
+                        this@AlarmService,
+                        nextAlarm.alarmId,
+                        cancelIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+                    systemAlarmManager.cancel(cancelPendingIntent)
+                    
+                    // Remove the canceled alarm from SharedPreferences
+                    getSharedPreferences("AlarmPrefs", MODE_PRIVATE)
+                        .edit()
+                        .remove("alarm_${nextAlarm.alarmId}")
+                        .apply()
+                    
                     Log.d(TAG, "Canceled alarm ${nextAlarm.alarmId}")
                     
                     // Find the next alarm after the one we just canceled
                     val subsequentAlarm = scheduleHelper.findNextAlarmAfter(nextAlarm.alarmId)
                     
                     if (subsequentAlarm != null) {
-                        // Schedule the subsequent alarm
-                        alarmManager.scheduleAlarm(subsequentAlarm.alarmId, subsequentAlarm.timeInMillis)
+                        // Schedule the subsequent alarm using system AlarmManager
+                        val scheduleIntent = Intent(this@AlarmService, AlarmReceiver::class.java).apply {
+                            putExtra("ALARM_ID", subsequentAlarm.alarmId)
+                        }
+                        
+                        val schedulePendingIntent = PendingIntent.getBroadcast(
+                            this@AlarmService,
+                            subsequentAlarm.alarmId,
+                            scheduleIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                        )
+
+                        systemAlarmManager.setExactAndAllowWhileIdle(
+                            android.app.AlarmManager.RTC_WAKEUP,
+                            subsequentAlarm.timeInMillis,
+                            schedulePendingIntent
+                        )
+
+                        // Save the rescheduled alarm time
+                        getSharedPreferences("AlarmPrefs", MODE_PRIVATE)
+                            .edit()
+                            .putLong("alarm_${subsequentAlarm.alarmId}", subsequentAlarm.timeInMillis)
+                            .apply()
+                        
                         Log.d(TAG, "Rescheduled alarm ${subsequentAlarm.alarmId} for ${subsequentAlarm.timeString}")
                         
                         withContext(Dispatchers.Main) {
@@ -550,11 +588,13 @@ class AlarmService : Service(), SensorEventListener {
                             ).show()
                         }
                         
-                        // Broadcast alarm schedule change to update UI
-                        sendBroadcast(Intent(ACTION_ALARM_STATE_CHANGED).apply {
-                            putExtra("alarm_rescheduled", true)
-                            putExtra("next_alarm_time", subsequentAlarm.timeString)
-                        })
+                        // Broadcast alarm schedule change to update UI (with slight delay to ensure SharedPreferences are updated)
+                        handler.postDelayed({
+                            sendBroadcast(Intent(ACTION_ALARM_STATE_CHANGED).apply {
+                                putExtra("alarm_rescheduled", true)
+                                putExtra("next_alarm_time", subsequentAlarm.timeString)
+                            })
+                        }, 100)
                     } else {
                         Log.d(TAG, "No subsequent alarm found to reschedule")
                         withContext(Dispatchers.Main) {
@@ -565,11 +605,13 @@ class AlarmService : Service(), SensorEventListener {
                             ).show()
                         }
                         
-                        // Broadcast alarm schedule change to update UI
-                        sendBroadcast(Intent(ACTION_ALARM_STATE_CHANGED).apply {
-                            putExtra("alarm_rescheduled", true)
-                            putExtra("next_alarm_time", "--:--")
-                        })
+                        // Broadcast alarm schedule change to update UI (with slight delay to ensure SharedPreferences are updated)
+                        handler.postDelayed({
+                            sendBroadcast(Intent(ACTION_ALARM_STATE_CHANGED).apply {
+                                putExtra("alarm_rescheduled", true)
+                                putExtra("next_alarm_time", "--:--")
+                            })
+                        }, 100)
                     }
                 } else {
                     Log.d(TAG, "Manual check-in not within 10-minute window of next alarm")

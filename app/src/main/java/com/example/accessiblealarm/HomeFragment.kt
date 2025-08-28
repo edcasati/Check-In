@@ -69,7 +69,11 @@ class HomeFragment : Fragment() {
                 
                 // Update next check-in time if alarm was rescheduled
                 if (isRescheduled) {
-                    updateNextCheckInTime()
+                    Log.d(TAG, "Alarm was rescheduled, updating next check-in time")
+                    // Use a slight delay to ensure all SharedPreferences updates are complete
+                    handler.postDelayed({
+                        updateNextCheckInTime()
+                    }, 200)
                 }
             }
         }
@@ -244,6 +248,7 @@ class HomeFragment : Fragment() {
 
     private fun updateNextCheckInTime() {
         try {
+            Log.d(TAG, "updateNextCheckInTime() called")
             val sharedPrefs = requireContext().getSharedPreferences("AlarmPrefs", 0)
             val currentTime = Calendar.getInstance()
             
@@ -284,23 +289,35 @@ class HomeFragment : Fragment() {
                 Log.d(TAG, "Checking alarm $i - Time: $alarmTime, Enabled: $isEnabled")
 
                 if (alarmTime != null && isEnabled) {
-                    val (alarmHour, alarmMinute) = alarmTime.split(":").map { it.toInt() }
-                    val alarmCalendar = Calendar.getInstance().apply {
-                        set(Calendar.HOUR_OF_DAY, alarmHour)
-                        set(Calendar.MINUTE, alarmMinute)
-                        set(Calendar.SECOND, 0)
-                        set(Calendar.MILLISECOND, 0)
-                    }
-
-                    // If the alarm time has passed today, check for tomorrow
-                    if (alarmCalendar.before(currentTime)) {
-                        alarmCalendar.add(Calendar.DAY_OF_YEAR, 1)
+                    // Check if there's a rescheduled time for this alarm
+                    val rescheduledTime = sharedPrefs.getLong("alarm_$i", 0)
+                    
+                    val alarmCalendar = if (rescheduledTime > 0 && rescheduledTime > currentTime.timeInMillis) {
+                        // Use the rescheduled time if it exists and is in the future
+                        Log.d(TAG, "Using rescheduled time for alarm $i: ${Date(rescheduledTime)}")
+                        Calendar.getInstance().apply {
+                            timeInMillis = rescheduledTime
+                        }
+                    } else {
+                        // Use the original scheduled time
+                        val (alarmHour, alarmMinute) = alarmTime.split(":").map { it.toInt() }
+                        Calendar.getInstance().apply {
+                            set(Calendar.HOUR_OF_DAY, alarmHour)
+                            set(Calendar.MINUTE, alarmMinute)
+                            set(Calendar.SECOND, 0)
+                            set(Calendar.MILLISECOND, 0)
+                        }.also { calendar ->
+                            // If the time has passed today, check for tomorrow
+                            if (calendar.before(currentTime)) {
+                                calendar.add(Calendar.DAY_OF_YEAR, 1)
+                            }
+                        }
                     }
 
                     val timeDiff = alarmCalendar.timeInMillis - currentTime.timeInMillis
-                    Log.d(TAG, "Alarm time: ${timeFormat.format(alarmCalendar.time)}, Time diff: $timeDiff")
+                    Log.d(TAG, "Alarm $i time: ${timeFormat.format(alarmCalendar.time)}, Time diff: $timeDiff")
 
-                    if (timeDiff < minTimeDiff) {
+                    if (timeDiff > 0 && timeDiff < minTimeDiff) {
                         minTimeDiff = timeDiff
                         nextAlarmTime = alarmCalendar
                     }
@@ -314,6 +331,7 @@ class HomeFragment : Fragment() {
             }
             Log.d(TAG, "Setting next check-in time to: $nextTimeText")
             nextCheckInTime.text = nextTimeText
+            Log.d(TAG, "Next check-in time display updated successfully")
         } catch (e: Exception) {
             Log.e(TAG, "Error updating next check-in time", e)
             nextCheckInTime.text = "--:--"
