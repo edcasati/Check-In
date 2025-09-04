@@ -62,13 +62,15 @@ class HomeFragment : Fragment() {
                 val isAlarmActive = intent.getBooleanExtra("alarm_active", false)
                 val alarmId = intent.getIntExtra("alarm_id", -1)
                 val isRescheduled = intent.getBooleanExtra("alarm_rescheduled", false)
+                val nextAlarmTime = intent.getStringExtra("next_alarm_time")
                 
-                Log.d(TAG, "Received alarm state change: active=$isAlarmActive, id=$alarmId, rescheduled=$isRescheduled")
+                Log.d(TAG, "Received alarm state change: active=$isAlarmActive, id=$alarmId, rescheduled=$isRescheduled, next_alarm_time=$nextAlarmTime")
                 
                 updateButtonAppearance()
                 
                 // Update next check-in time if alarm was rescheduled
                 if (isRescheduled) {
+                    Log.d(TAG, "Alarm was rescheduled, updating next check-in time display")
                     updateNextCheckInTime()
                 }
             }
@@ -230,6 +232,9 @@ class HomeFragment : Fragment() {
                         
                         // Reset missed check-in counter
                         SettingsFragment.resetMissedCount(requireContext())
+                        
+                        // Immediately update the next check-in time display to reflect the reschedule
+                        updateNextCheckInTime()
                     }
                     true
                 }
@@ -299,45 +304,15 @@ class HomeFragment : Fragment() {
                 }
             }
             
-            var nextAlarmTime: Calendar? = null
-            var minTimeDiff = Long.MAX_VALUE
+            // Use AlarmScheduleHelper to find the next alarm (this handles rescheduling correctly)
+            val scheduleHelper = AlarmScheduleHelper(requireContext())
+            val nextAlarm = scheduleHelper.findNextAlarm()
 
-            Log.d(TAG, "Current time: ${timeFormat.format(currentTime.time)}")
-
-            // Check all 5 possible alarms
-            for (i in 1..5) {
-                val alarmTime = sharedPrefs.getString("alarm${i}_time", null)
-                val isEnabled = sharedPrefs.getBoolean("alarm${i}_enabled", false)
-                
-                Log.d(TAG, "Checking alarm $i - Time: $alarmTime, Enabled: $isEnabled")
-
-                if (alarmTime != null && isEnabled) {
-                    val (alarmHour, alarmMinute) = alarmTime.split(":").map { it.toInt() }
-                    val alarmCalendar = Calendar.getInstance().apply {
-                        set(Calendar.HOUR_OF_DAY, alarmHour)
-                        set(Calendar.MINUTE, alarmMinute)
-                        set(Calendar.SECOND, 0)
-                        set(Calendar.MILLISECOND, 0)
-                    }
-
-                    // If the alarm time has passed today, check for tomorrow
-                    if (alarmCalendar.before(currentTime)) {
-                        alarmCalendar.add(Calendar.DAY_OF_YEAR, 1)
-                    }
-
-                    val timeDiff = alarmCalendar.timeInMillis - currentTime.timeInMillis
-                    Log.d(TAG, "Alarm time: ${timeFormat.format(alarmCalendar.time)}, Time diff: $timeDiff")
-
-                    if (timeDiff < minTimeDiff) {
-                        minTimeDiff = timeDiff
-                        nextAlarmTime = alarmCalendar
-                    }
-                }
-            }
-
-            val nextTimeText = if (nextAlarmTime != null) {
-                timeFormat.format(nextAlarmTime.time)
+            val nextTimeText = if (nextAlarm != null) {
+                Log.d(TAG, "Found next alarm: ID=${nextAlarm.alarmId}, Time=${nextAlarm.timeString}")
+                nextAlarm.timeString
             } else {
+                Log.d(TAG, "No next alarm found")
                 "--:--"
             }
             Log.d(TAG, "Setting next check-in time to: $nextTimeText")

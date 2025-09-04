@@ -179,6 +179,10 @@ class AlarmService : Service(), SensorEventListener {
                 startAlarm()
             }
             "STOP_ALARM" -> {
+                // Reschedule for 24 hours when manually stopped
+                if (alarmId != -1) {
+                    rescheduleAlarmFor24Hours(alarmId)
+                }
                 stopAlarm()
                 // Send SMS when alarm is stopped manually
                 sendCheckInSMS()
@@ -311,6 +315,12 @@ class AlarmService : Service(), SensorEventListener {
                     } else {
                         // Snooze attempt also timed out - final failure
                         Log.d(TAG, "Snooze attempt timed out, final failure")
+                        
+                        // Reschedule for 24 hours before stopping (timeout case)
+                        if (alarmId != -1) {
+                            rescheduleAlarmFor24Hours(alarmId)
+                        }
+                        
                         stopAlarm()
                         
                         // Send failure SMS and then stop service
@@ -390,6 +400,8 @@ class AlarmService : Service(), SensorEventListener {
                 putExtra("alarm_id", alarmId)
             })
 
+            // Note: Rescheduling logic is handled separately for manual stops vs timeouts
+
             // Reset snooze state when alarm is manually stopped
             isSnoozeAttempt = false
 
@@ -401,6 +413,73 @@ class AlarmService : Service(), SensorEventListener {
             wakeLock?.takeIf { it.isHeld }?.release()
         } catch (e: Exception) {
             Log.e(TAG, "Error stopping alarm", e)
+        }
+    }
+
+    private fun rescheduleAlarmFor24Hours(alarmId: Int) {
+        try {
+            Log.d(TAG, "Rescheduling alarm $alarmId for 24 hours from now")
+            
+            val sharedPrefs = getSharedPreferences("AlarmPrefs", MODE_PRIVATE)
+            
+            // Check if this alarm is currently enabled
+            val isEnabled = sharedPrefs.getBoolean("alarm${alarmId}_enabled", false)
+            if (!isEnabled) {
+                Log.d(TAG, "Alarm $alarmId is not enabled, skipping reschedule")
+                return
+            }
+            
+            // Get the saved time for this alarm
+            val savedTime = sharedPrefs.getString("alarm${alarmId}_time", null)
+            if (savedTime == null) {
+                Log.w(TAG, "No saved time found for alarm $alarmId")
+                return
+            }
+            
+            // Parse the saved time (format: "HH:mm")
+            val timeParts = savedTime.split(":")
+            if (timeParts.size != 2) {
+                Log.e(TAG, "Invalid time format for alarm $alarmId: $savedTime")
+                return
+            }
+            
+            val hour = timeParts[0].toIntOrNull()
+            val minute = timeParts[1].toIntOrNull()
+            if (hour == null || minute == null) {
+                Log.e(TAG, "Could not parse time for alarm $alarmId: $savedTime")
+                return
+            }
+            
+            // Step 1: Toggle alarm OFF (cancel current scheduling)
+            val alarmManager = AlarmManager(this)
+            alarmManager.cancelAlarm(alarmId)
+            Log.d(TAG, "Canceled alarm $alarmId")
+            
+            // Step 2: Calculate next day's time
+            val calendar = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, hour)
+                set(Calendar.MINUTE, minute)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+                // Add 24 hours to schedule for tomorrow at the same time
+                add(Calendar.DAY_OF_YEAR, 1)
+            }
+            
+            // Step 3: Toggle alarm ON (schedule for next day)
+            alarmManager.scheduleAlarm(alarmId, calendar.timeInMillis)
+            Log.d(TAG, "Rescheduled alarm $alarmId for ${SimpleDateFormat("MMM d, yyyy hh:mm a", Locale.getDefault()).format(calendar.time)}")
+            
+            // Show confirmation to user
+            val formattedTime = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(calendar.time)
+            val formattedDate = SimpleDateFormat("MMM d", Locale.getDefault()).format(calendar.time)
+            Toast.makeText(
+                applicationContext,
+                "Alarm automatically rescheduled for tomorrow ($formattedDate) at $formattedTime",
+                Toast.LENGTH_LONG
+            ).show()
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error rescheduling alarm $alarmId for 24 hours", e)
         }
     }
 
@@ -478,6 +557,10 @@ class AlarmService : Service(), SensorEventListener {
 
                 // If orientation has changed between face up and face down, stop the alarm
                 Log.d(TAG, "Phone orientation changed from $lastOrientation to $currentOrientation (face up/down), stopping alarm")
+                // Reschedule for 24 hours when stopped by phone flip
+                if (alarmId != -1) {
+                    rescheduleAlarmFor24Hours(alarmId)
+                }
                 stopAlarm()
                 // Send SMS when alarm is stopped by phone flip (same as manual tap)
                 sendCheckInSMS()
